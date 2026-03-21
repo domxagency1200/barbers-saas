@@ -70,7 +70,7 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
           return (
             <Link
               key={id}
-              href={`/dashboard/bookings/${id}`}
+              href={`/dashboard/bookings/${id}?date=${dateStr}`}
               className="rounded-2xl border border-white/10 p-4 flex items-center justify-between block"
               style={{ backgroundColor: '#242424' }}
             >

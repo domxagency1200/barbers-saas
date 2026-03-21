@@ -1,5 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { revalidatePath } from 'next/cache'
+import DeleteBookingButton from '@/components/dashboard/DeleteBookingButton'
+import EditBookingModal from '@/components/dashboard/EditBookingModal'
 
 function formatTime(iso: string) {
   const d = new Date(iso)
@@ -40,7 +43,7 @@ export default async function BarberBookingsPage({
 
   const { data: raw } = await supabase
     .from('bookings')
-    .select('id, starts_at, ends_at, customers(name, phone), services(name_ar)')
+    .select('id, starts_at, ends_at, customers(name, phone), services(name_ar, duration_min)')
     .eq('barber_id', barberId)
     .gte('starts_at', dayStart)
     .lt('starts_at', dayEnd)
@@ -51,6 +54,20 @@ export default async function BarberBookingsPage({
     customers: Array.isArray(b.customers) ? (b.customers[0] ?? null) : (b.customers ?? null),
     services:  Array.isArray(b.services)  ? (b.services[0]  ?? null) : (b.services  ?? null),
   }))
+
+  async function deleteBooking(bookingId: string) {
+    'use server'
+    const supabase = await createClient()
+    await supabase.from('bookings').delete().eq('id', bookingId)
+    revalidatePath(`/dashboard/bookings/${barberId}`)
+  }
+
+  async function rescheduleBooking(bookingId: string, newStartsAt: string, newEndsAt: string) {
+    'use server'
+    const supabase = await createClient()
+    await supabase.from('bookings').update({ starts_at: newStartsAt, ends_at: newEndsAt }).eq('id', bookingId)
+    revalidatePath(`/dashboard/bookings/${barberId}`)
+  }
 
   const nowTime = new Date()
 
@@ -64,13 +81,25 @@ export default async function BarberBookingsPage({
       ) : (
         bookings.map((b: any) => {
           const isDone = new Date(b.ends_at) < nowTime
+          const durationMin = b.services?.duration_min ?? 30
           return (
             <div key={b.id} className="rounded-2xl border border-white/10 p-4 space-y-2" style={{ backgroundColor: '#242424' }}>
               <div className="flex items-center justify-between gap-2">
                 <p className="text-sm font-semibold text-white truncate">{b.customers?.name ?? '—'}</p>
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${isDone ? 'bg-green-900/40 text-green-400' : 'bg-yellow-900/40 text-yellow-400'}`}>
-                  {isDone ? 'منجز' : 'قيد الانتظار'}
-                </span>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isDone ? 'bg-green-900/40 text-green-400' : 'bg-yellow-900/40 text-yellow-400'}`}>
+                    {isDone ? 'منجز' : 'قيد الانتظار'}
+                  </span>
+                  <EditBookingModal
+                    bookingId={b.id}
+                    barberId={barberId}
+                    date={dateStr}
+                    durationMin={durationMin}
+                    currentStartsAt={b.starts_at}
+                    onReschedule={rescheduleBooking}
+                  />
+                  <DeleteBookingButton onDelete={deleteBooking.bind(null, b.id)} />
+                </div>
               </div>
               <p className="text-xs text-gray-500">{b.customers?.phone ?? '—'}</p>
               <div className="flex items-center justify-between gap-2">

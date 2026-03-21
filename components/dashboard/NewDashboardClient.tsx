@@ -210,7 +210,7 @@ export default function NewDashboardClient({ todayBookings, monthBookings }: Pro
             {groupByBarber(selectedDayBookings).map(({ id: barberId, name, bookings: bList }) => {
               const now2 = new Date()
               const completed = bList.filter(b => new Date(b.ends_at) < now2).length
-              const pending = bList.filter(b => new Date(b.ends_at) >= now2 || b.status === 'pending').length
+              const pending = bList.filter(b => new Date(b.ends_at) >= now2).length
               const dateParam = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(selectedDay).padStart(2, '0')}`
               return (
                 <Link
