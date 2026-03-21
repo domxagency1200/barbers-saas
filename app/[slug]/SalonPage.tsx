@@ -201,7 +201,12 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
   const tagline = salon.meta?.tagline || `مستوى جديد من العناية الرجالية في ${city} — تفاصيل دقيقة، أجواء راقية، بالحجز المسبق فقط.`
   const neighborhood = salon.meta?.neighborhood || city
   const heroImage = salon.meta?.hero_image || '/hero.jpg'
-  const mapUrl = salon.meta?.map_url || null
+  const rawMapUrl = salon.meta?.map_url || null
+  const mapUrl = rawMapUrl
+    ? (rawMapUrl.trim().startsWith('<iframe')
+        ? (rawMapUrl.match(/src="([^"]+)"/) ?? [])[1] ?? null
+        : rawMapUrl)
+    : null
   const featured = services.slice(0, 3)
 
   return (
