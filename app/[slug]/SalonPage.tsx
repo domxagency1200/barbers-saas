@@ -535,8 +535,10 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
             </div>
             <div className="mt-4 reveal">
               <a href={mapUrl} target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-5 py-2.5 text-sm font-bold text-white/70 transition-all duration-200 hover:border-gold/30 hover:text-white"
-                style={{ background: 'rgba(0,0,0,.3)' }}>
+                className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold transition-all duration-200"
+                style={{ background: '#C9A84C', color: '#0f0f0f' }}
+                onMouseEnter={e => (e.currentTarget.style.background = '#b8943d')}
+                onMouseLeave={e => (e.currentTarget.style.background = '#C9A84C')}>
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
                 افتح في خرائط Google
               </a>
