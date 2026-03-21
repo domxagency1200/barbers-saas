@@ -43,14 +43,25 @@ export default async function NewDashboardPage() {
   }
 
   const [
-    { data: todayBookings },
-    { data: monthBookings },
+    { data: todayRaw },
+    { data: monthRaw },
   ] = await Promise.all([todayQ, monthQ])
+
+  // Supabase returns joined relations as arrays; normalize to single object | null
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function normalize(rows: any[] | null) {
+    return (rows ?? []).map((b: any) => ({
+      ...b,
+      customers: Array.isArray(b.customers) ? (b.customers[0] ?? null) : (b.customers ?? null),
+      barbers:   Array.isArray(b.barbers)   ? (b.barbers[0]   ?? null) : (b.barbers   ?? null),
+      services:  Array.isArray(b.services)  ? (b.services[0]  ?? null) : (b.services  ?? null),
+    }))
+  }
 
   return (
     <NewDashboardClient
-      todayBookings={todayBookings ?? []}
-      monthBookings={monthBookings ?? []}
+      todayBookings={normalize(todayRaw)}
+      monthBookings={normalize(monthRaw)}
     />
   )
 }
