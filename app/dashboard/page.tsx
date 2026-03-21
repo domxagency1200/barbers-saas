@@ -21,7 +21,7 @@ export default async function NewDashboardPage() {
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
   const monthEnd   = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString()
 
-  const bookingSelect = 'id, starts_at, ends_at, status, customers(name, phone), barbers(name), services(name_ar, price)'
+  const bookingSelect = 'id, starts_at, ends_at, status, barber_id, customers(name, phone), barbers(name), services(name_ar, price)'
 
   let todayQ = supabase
     .from('bookings')

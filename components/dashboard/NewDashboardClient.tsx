@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 
 // ── Types ────────────────────────────────────────────────────
 
@@ -9,6 +10,7 @@ interface Booking {
   starts_at: string
   ends_at: string
   status: string
+  barber_id: string | null
   customers: { name: string; phone: string } | null
   barbers: { name: string } | null
   services: { name_ar: string; price: number } | null
@@ -54,14 +56,15 @@ function isSameDay(iso: string, year: number, month: number, day: number) {
   return d.getFullYear() === year && d.getMonth() === month && d.getDate() === day
 }
 
-function groupByBarber(bookings: Booking[]): { name: string; bookings: Booking[] }[] {
-  const map: Record<string, Booking[]> = {}
+function groupByBarber(bookings: Booking[]): { id: string | null; name: string; bookings: Booking[] }[] {
+  const map: Record<string, { id: string | null; name: string; bookings: Booking[] }> = {}
   bookings.forEach(b => {
+    const key = b.barber_id ?? 'unknown'
     const name = b.barbers?.name ?? 'غير محدد'
-    if (!map[name]) map[name] = []
-    map[name].push(b)
+    if (!map[key]) map[key] = { id: b.barber_id, name, bookings: [] }
+    map[key].bookings.push(b)
   })
-  return Object.entries(map).map(([name, list]) => ({ name, bookings: list }))
+  return Object.values(map)
 }
 
 // ── Sub-components ───────────────────────────────────────────
@@ -157,7 +160,6 @@ function MonthCalendar({
 export default function NewDashboardClient({ todayBookings, monthBookings }: Props) {
   const now = new Date()
   const [selectedDay, setSelectedDay] = useState(now.getDate())
-  const [expandedBarber, setExpandedBarber] = useState<string | null>(null)
 
   const barberGroups = groupByBarber(todayBookings)
   const todayRevenue = todayBookings.reduce((s, b) => s + (b.services?.price ?? 0), 0)
@@ -180,32 +182,6 @@ export default function NewDashboardClient({ todayBookings, monthBookings }: Pro
           <p className="text-3xl font-bold" style={{ color: '#D4A843' }}>{todayRevenue}</p>
           <p className="text-xs text-gray-500">ر.س</p>
         </div>
-      </div>
-
-      {/* Barber columns */}
-      <div>
-        <h2 className="text-sm font-semibold text-gray-500 mb-3 px-1">حجوزات اليوم — بالحلاق</h2>
-        {barberGroups.length === 0 ? (
-          <div className="rounded-2xl border border-white/10 p-8 text-center" style={{ backgroundColor: '#242424' }}>
-            <p className="text-gray-500 text-sm">لا توجد حجوزات اليوم</p>
-          </div>
-        ) : (
-          <div className="flex gap-4 overflow-x-auto pb-2 -mx-4 px-4">
-            {barberGroups.map(({ name, bookings }) => (
-              <div key={name} className="flex-none w-60 md:flex-1 md:w-auto min-w-0">
-                <div className="rounded-t-xl px-3 py-2 flex items-center justify-between mb-2" style={{ backgroundColor: '#2e2e2e' }}>
-                  <span className="text-sm font-semibold text-white truncate">{name}</span>
-                  <span className="text-xs rounded-full px-2 py-0.5 shrink-0 mr-2 font-medium" style={{ backgroundColor: '#D4A843', color: '#1a1a1a' }}>
-                    {bookings.length}
-                  </span>
-                </div>
-                <div className="space-y-2">
-                  {bookings.map(b => <BookingCard key={b.id} b={b} />)}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* Monthly calendar */}
@@ -231,45 +207,24 @@ export default function NewDashboardClient({ todayBookings, monthBookings }: Pro
           </div>
         ) : (
           <div className="space-y-2">
-            {groupByBarber(selectedDayBookings).map(({ name, bookings: bList }) => {
+            {groupByBarber(selectedDayBookings).map(({ id: barberId, name, bookings: bList }) => {
               const now2 = new Date()
               const completed = bList.filter(b => new Date(b.ends_at) < now2).length
               const pending = bList.filter(b => new Date(b.ends_at) >= now2 || b.status === 'pending').length
-              const isExpanded = expandedBarber === name
+              const dateParam = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(selectedDay).padStart(2, '0')}`
               return (
-                <div key={name} className="rounded-2xl border border-white/10 overflow-hidden" style={{ backgroundColor: '#242424' }}>
-                  <button
-                    onClick={() => setExpandedBarber(isExpanded ? null : name)}
-                    className="w-full p-4 flex items-center justify-between"
-                  >
-                    <p className="font-semibold text-white text-sm">{name}</p>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-green-900/40 text-green-400">{completed} منجز</span>
-                      <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-yellow-900/40 text-yellow-400">{pending} قيد الانتظار</span>
-                    </div>
-                  </button>
-                  {isExpanded && (
-                    <div className="border-t border-white/10 divide-y divide-white/5">
-                      {bList.map(b => {
-                        const isDone = new Date(b.ends_at) < now2
-                        return (
-                          <div key={b.id} className="px-4 py-3 flex items-center justify-between gap-2">
-                            <div className="min-w-0">
-                              <p className="text-sm text-white font-medium truncate">{b.customers?.name ?? '—'}</p>
-                              <p className="text-xs text-gray-500 truncate">{b.services?.name_ar ?? '—'}</p>
-                            </div>
-                            <div className="flex items-center gap-2 shrink-0">
-                              <span className="text-xs text-gray-400">{formatTime(b.starts_at)}</span>
-                              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isDone ? 'bg-green-900/40 text-green-400' : 'bg-yellow-900/40 text-yellow-400'}`}>
-                                {isDone ? 'منجز' : 'قيد الانتظار'}
-                              </span>
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  )}
-                </div>
+                <Link
+                  key={barberId ?? name}
+                  href={barberId ? `/dashboard/bookings/${barberId}?date=${dateParam}` : '#'}
+                  className="rounded-2xl border border-white/10 p-4 flex items-center justify-between block"
+                  style={{ backgroundColor: '#242424' }}
+                >
+                  <p className="font-semibold text-white text-sm">{name}</p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-green-900/40 text-green-400">{completed} منجز</span>
+                    <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-yellow-900/40 text-yellow-400">{pending} قيد الانتظار</span>
+                  </div>
+                </Link>
               )
             })}
           </div>

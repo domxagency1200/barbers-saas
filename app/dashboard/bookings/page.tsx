@@ -9,7 +9,7 @@ interface Booking {
   barber_id: string | null
 }
 
-export default async function BookingsPage({ searchParams }: { searchParams: { date?: string } }) {
+export default async function BookingsPage({ searchParams }: { searchParams: Promise<{ date?: string }> }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/dashboard/login')
@@ -22,9 +22,10 @@ export default async function BookingsPage({ searchParams }: { searchParams: { d
 
   const salonId = member?.salon_id
 
+  const { date } = await searchParams
   const now = new Date()
   const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
-  const dateStr = searchParams.date ?? todayStr
+  const dateStr = date ?? todayStr
   const dateObj = new Date(dateStr)
 
   const dayStart = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate(), 0, 0, 0).toISOString()
