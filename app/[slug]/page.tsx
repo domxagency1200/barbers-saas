@@ -12,7 +12,7 @@ export default async function SlugPage({
 
   const { data: salon, error } = await supabase
     .from('salons')
-    .select('id, name, whatsapp_number, city, is_active')
+    .select('id, name, whatsapp_number, city, is_active, meta')
     .eq('slug', slug)
     .single()
 
@@ -26,7 +26,7 @@ export default async function SlugPage({
     )
   }
 
-  const [{ data: barbers }, { data: services }] = await Promise.all([
+  const [{ data: barbers }, { data: services }, { data: wh }] = await Promise.all([
     supabase
       .from('barbers')
       .select('id, name')
@@ -38,11 +38,20 @@ export default async function SlugPage({
       .eq('salon_id', salon.id)
       .eq('is_active', true)
       .order('name_ar'),
+    supabase
+      .from('working_hours')
+      .select('open_at, close_at')
+      .eq('salon_id', salon.id)
+      .single(),
   ])
+
+  const workingHours = wh
+    ? `${wh.open_at.slice(0, 5)}–${wh.close_at.slice(0, 5)}`
+    : '08:00–22:00'
 
   return (
     <SalonPage
-      salon={salon}
+      salon={{ ...salon, working_hours: workingHours }}
       barbers={barbers ?? []}
       services={services ?? []}
       slug={slug}

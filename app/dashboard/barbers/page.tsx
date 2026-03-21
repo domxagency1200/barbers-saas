@@ -84,28 +84,25 @@ export default function BarbersPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!name.trim()) { setFormError('اسم الحلاق مطلوب'); return }
-    if (!salonId) { setFormError('تعذّر تحديد الصالون'); return }
 
     setSubmitting(true)
     setFormError(null)
     setFormSuccess(false)
 
-    const payload: Record<string, unknown> = {
-      name: name.trim(),
-      salon_id: salonId,
-      is_available: true,
-    }
-    if (avatarUrl.trim()) payload.avatar_url = avatarUrl.trim()
+    const res = await fetch('/api/dashboard/barbers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name.trim(), avatar_url: avatarUrl.trim() || undefined }),
+    })
+    const json = await res.json()
 
-    const { error: e } = await supabase.from('barbers').insert(payload)
-
-    if (e) {
-      setFormError('تعذّر إضافة الحلاق: ' + e.message)
+    if (!res.ok) {
+      setFormError(json.error ?? 'تعذّر إضافة الحلاق')
     } else {
       setName('')
       setAvatarUrl('')
       setFormSuccess(true)
-      await loadBarbers(salonId)
+      if (salonId) await loadBarbers(salonId)
     }
     setSubmitting(false)
   }

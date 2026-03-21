@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from 'react'
 interface Barber { id: string; name: string }
 interface Service { id: string; name_ar: string; price: number; duration_min: number }
 interface Props {
-  salon: { id: string; name: string; whatsapp_number: string | null; city: string | null; working_hours?: string | null; meta?: { tagline?: string; neighborhood?: string; hero_image?: string } | null }
+  salon: { id: string; name: string; whatsapp_number: string | null; city: string | null; working_hours?: string | null; meta?: { tagline?: string; neighborhood?: string; hero_image?: string; map_url?: string } | null }
   barbers: Barber[]
   services: Service[]
   slug: string
@@ -127,16 +127,17 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
       const barberObj = barbers.find(b => b.name === barber)
       if (!barberObj) { if (!cancelled) setTimeOpts([]); return }
       try {
-        const res = await fetch(`/api/availability?barber_id=${barberObj.id}&date=${date}&duration=30&utcOffset=180`)
+        const url = `/api/availability?barber_id=${barberObj.id}&date=${date}&duration=30&utcOffset=180&salon_id=${salon.id}`
+        const res = await fetch(url)
+        const json = await res.json()
         if (res.ok) {
-          const json = await res.json()
           const slots: string[] = json.slots ?? []
           if (!cancelled) setTimeOpts(slots.map(s => {
             const [h, m] = s.split(':').map(Number)
             return { value: s, label: toArabicTimeLabel(h, m), booked: false }
           }))
         }
-      } catch { if (!cancelled) setTimeOpts([]) }
+      } catch (err) { console.error('[availability] fetch error:', err); if (!cancelled) setTimeOpts([]) }
     }
     fill()
     return () => { cancelled = true }
@@ -168,6 +169,7 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
     if (!barberObj) { setFormMsg({ text: 'يرجى اختيار الحلاق.', error: true }); return }
     const serviceObj = services.find(s => checkedServices.has(s.name_ar))
     if (!serviceObj) { setFormMsg({ text: 'يرجى اختيار خدمة.', error: true }); return }
+    if (!date || !time) { setFormMsg({ text: 'يرجى اختيار التاريخ والوقت.', error: true }); return }
     const starts_at = new Date(`${date}T${time}:00+03:00`).toISOString()
     const ends_at = new Date(new Date(starts_at).getTime() + serviceObj.duration_min * 60 * 1000).toISOString()
     setSubmitting(true)
@@ -198,6 +200,7 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
   const tagline = salon.meta?.tagline || `مستوى جديد من العناية الرجالية في ${city} — تفاصيل دقيقة، أجواء راقية، بالحجز المسبق فقط.`
   const neighborhood = salon.meta?.neighborhood || city
   const heroImage = salon.meta?.hero_image || '/hero.jpg'
+  const mapUrl = salon.meta?.map_url || null
   const featured = services.slice(0, 3)
 
   return (
@@ -518,6 +521,7 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
         </section>
 
         {/* ── LOCATION ── */}
+        {mapUrl && (
         <section id="location" className="scroll-mt-24 border-y border-white/5 bg-[#FAF7F0] sec-light">
           <div className="mx-auto max-w-6xl px-4 py-20 lg:px-6">
             <div className="flex flex-wrap items-end justify-between gap-6 reveal">
@@ -527,11 +531,25 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
                 <p className="mt-2 text-white/50 leading-relaxed">زرنا في {city}—واستمتع بتجربة حلاقة فاخرة بالحجز المسبق.</p>
               </div>
             </div>
-            <div className="mt-12 overflow-hidden rounded-3xl border border-white/8 shadow-soft reveal">
-              <iframe title={`موقع ${salon.name}`} className="h-[420px] w-full" loading="lazy" referrerPolicy="no-referrer-when-downgrade" src="https://www.google.com/maps?q=24.7910752,46.6247514&z=16&output=embed" />
+            <div className="mt-4 reveal">
+              <a href={mapUrl} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-5 py-2.5 text-sm font-bold text-white/70 transition-all duration-200 hover:border-gold/30 hover:text-white"
+                style={{ background: 'rgba(0,0,0,.3)' }}>
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+                افتح في خرائط Google
+              </a>
             </div>
+            <a href={mapUrl} target="_blank" rel="noopener noreferrer"
+              className="mt-12 flex h-[300px] w-full items-center justify-center overflow-hidden rounded-3xl border border-white/8 shadow-soft reveal transition-opacity hover:opacity-80"
+              style={{ background: 'rgba(255,255,255,.04)' }}>
+              <div className="flex flex-col items-center gap-4 text-center">
+                <svg className="h-14 w-14 text-gold/60" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                <span className="text-sm font-bold text-white/60">انقر لفتح الموقع في خرائط Google</span>
+              </div>
+            </a>
           </div>
         </section>
+        )}
       </main>
 
       {/* ── FOOTER ── */}

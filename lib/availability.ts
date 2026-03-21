@@ -5,10 +5,13 @@ export function generateSlots(openAt: string, closeAt: string, duration: number 
   const [closeH, closeM] = closeAt.split(':').map(Number)
 
   let current = openH * 60 + openM
-  const end = closeH * 60 + closeM
+  let end = closeH * 60 + closeM
+
+  // Handle past-midnight close time (e.g. open 07:00, close 01:00 next day)
+  if (end <= current) end += 24 * 60
 
   while (current + duration <= end) {
-    const h = Math.floor(current / 60).toString().padStart(2, '0')
+    const h = (Math.floor(current / 60) % 24).toString().padStart(2, '0')
     const m = (current % 60).toString().padStart(2, '0')
     slots.push(`${h}:${m}`)
     current += 30

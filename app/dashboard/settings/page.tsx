@@ -13,7 +13,7 @@ interface Salon {
   id: string
   name: string
   whatsapp_number: string | null
-  meta?: { tagline?: string; neighborhood?: string; hero_image?: string } | null
+  meta?: { tagline?: string; neighborhood?: string; hero_image?: string; map_url?: string } | null
 }
 
 interface WorkingHours {
@@ -109,7 +109,7 @@ export default function SettingsPage() {
   const [newBarberName, setNewBarberName] = useState('')
   const [savingNewBarber, setSavingNewBarber] = useState(false)
 
-  const [metaForm, setMetaForm] = useState({ tagline: '', neighborhood: '', hero_image: '' })
+  const [metaForm, setMetaForm] = useState({ tagline: '', neighborhood: '', hero_image: '', map_url: '' })
   const [metaEditing, setMetaEditing] = useState(false)
   const [savingMeta, setSavingMeta] = useState(false)
 
@@ -155,7 +155,7 @@ export default function SettingsPage() {
     // Load meta separately — column may not exist yet
     const { data: metaRow } = await supabase.from('salons').select('meta').eq('id', sid).single()
     const m = (metaRow as any)?.meta ?? {}
-    setMetaForm({ tagline: m.tagline ?? '', neighborhood: m.neighborhood ?? '', hero_image: m.hero_image ?? '' })
+    setMetaForm({ tagline: m.tagline ?? '', neighborhood: m.neighborhood ?? '', hero_image: m.hero_image ?? '', map_url: m.map_url ?? '' })
   }
 
   function startEditSalon() {
@@ -223,6 +223,7 @@ export default function SettingsPage() {
       tagline: metaForm.tagline.trim(),
       neighborhood: metaForm.neighborhood.trim(),
       hero_image: metaForm.hero_image.trim(),
+      map_url: metaForm.map_url.trim(),
     }
     const { error: e } = await supabase.from('salons').update({ meta: metaPayload }).eq('id', id)
     if (e) {
@@ -264,32 +265,18 @@ export default function SettingsPage() {
   async function saveNewBarber() {
     if (!newBarberName.trim()) return
     setSavingNewBarber(true)
-    const payload: Record<string, unknown> = { name: newBarberName.trim(), is_available: true }
-    if (salonId) payload.salon_id = salonId
-    const { data, error: e } = await supabase.from('barbers').insert(payload).select('id, name, is_available').single()
-    if (!e && data) {
-      setBarbers(prev => [...prev, data])
+    const res = await fetch('/api/dashboard/barbers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: newBarberName.trim() }),
+    })
+    const json = await res.json()
+    if (!res.ok) {
+      setError(json.error ?? 'تعذّر إضافة الحلاق')
+    } else {
+      setBarbers(prev => [...prev, json.barber])
       setNewBarberName('')
       setAddingBarber(false)
-
-      // Insert default schedule for all 7 days using salon's working_hours
-      if (salonId) {
-        const { data: wh } = await supabase
-          .from('working_hours')
-          .select('open_at, close_at')
-          .eq('salon_id', salonId)
-          .single()
-        const open = wh?.open_at?.slice(0, 5) ?? '08:00'
-        const close = wh?.close_at?.slice(0, 5) ?? '22:00'
-        const schedules = [0, 1, 2, 3, 4, 5, 6].map(day => ({
-          barber_id: data.id,
-          day_of_week: day,
-          open_at: open,
-          close_at: close,
-          is_off: false,
-        }))
-        await supabase.from('barber_schedules').insert(schedules)
-      }
     }
     setSavingNewBarber(false)
   }
@@ -425,6 +412,11 @@ export default function SettingsPage() {
                 <input value={metaForm.hero_image} onChange={e => setMetaForm(f => ({ ...f, hero_image: e.target.value }))}
                   placeholder="https://..." className={inputCls} dir="ltr" />
               </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">رابط الموقع على خرائط Google</label>
+                <input value={metaForm.map_url} onChange={e => setMetaForm(f => ({ ...f, map_url: e.target.value }))}
+                  placeholder="https://maps.google.com/..." className={inputCls} dir="ltr" />
+              </div>
               <div className="flex items-center justify-end gap-2 pt-1">
                 <button onClick={() => setMetaEditing(false)} className="px-4 py-2 text-sm text-gray-500 hover:text-gray-300">إلغاء</button>
                 <button onClick={saveMeta} disabled={savingMeta}
@@ -448,6 +440,10 @@ export default function SettingsPage() {
                 <div className="flex items-center gap-3">
                   <span className="text-xs text-gray-500 w-24 shrink-0">صورة الغلاف</span>
                   <span className="text-sm text-gray-400 truncate max-w-[200px]" dir="ltr">{salon?.meta?.hero_image || '—'}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-gray-500 w-24 shrink-0">خرائط Google</span>
+                  <span className="text-sm text-gray-400 truncate max-w-[200px]" dir="ltr">{salon?.meta?.map_url || '—'}</span>
                 </div>
               </div>
               <button onClick={() => setMetaEditing(true)}
