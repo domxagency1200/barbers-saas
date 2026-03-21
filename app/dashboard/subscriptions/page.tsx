@@ -193,7 +193,8 @@ export default function SubscriptionsPage() {
     if (sid) q = q.eq('salon_id', sid)
     const { data, error: e } = await q
     if (e) { setError('تعذّر تحميل المشتركين'); return }
-    setSubscribers((data as Subscriber[]) ?? [])
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    setSubscribers((data ?? []).map((r: any) => ({ ...r, subscription_plans: Array.isArray(r.subscription_plans) ? (r.subscription_plans[0] ?? null) : r.subscription_plans })) as Subscriber[])
   }
 
   async function saveNewSub() {
@@ -204,7 +205,12 @@ export default function SubscriptionsPage() {
     const payload: Record<string, unknown> = { name: newSubForm.name.trim(), phone: newSubForm.phone.trim(), plan_id: newSubForm.plan_id, start_date: newSubForm.start_date, end_date: endDate }
     if (salonId) payload.salon_id = salonId
     const { data, error: e } = await supabase.from('subscribers').insert(payload).select('id, name, phone, start_date, end_date, plan_id, subscription_plans(name, duration_months)').single()
-    if (!e && data) { setSubscribers(prev => [data as Subscriber, ...prev]); setAddingSub(false); setNewSubForm({ name: '', phone: '', plan_id: '', start_date: today }) }
+    if (!e && data) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const r = data as any
+      const normalized: Subscriber = { ...r, subscription_plans: Array.isArray(r.subscription_plans) ? (r.subscription_plans[0] ?? null) : r.subscription_plans }
+      setSubscribers(prev => [normalized, ...prev]); setAddingSub(false); setNewSubForm({ name: '', phone: '', plan_id: '', start_date: today })
+    }
     setSavingNewSub(false)
   }
 
