@@ -164,7 +164,12 @@ export default function StatsPage() {
         .lte('starts_at', toISO)
       if (salonId) q = q.eq('salon_id', salonId)
       const { data } = await q
-      setBookings((data as StatBooking[]) ?? [])
+      setBookings(
+        (data ?? []).map((b: { starts_at: string; services: { price: number } | { price: number }[] | null }) => ({
+          starts_at: b.starts_at,
+          services: Array.isArray(b.services) ? (b.services[0] ?? null) : b.services,
+        }))
+      )
     }
     fetch()
   // eslint-disable-next-line react-hooks/exhaustive-deps
