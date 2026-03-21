@@ -229,8 +229,12 @@ export default function StatsPage() {
 
       {/* Chart */}
       <div className="rounded-2xl border border-white/10 p-4" style={{ backgroundColor: '#242424' }}>
-        <p className="text-sm font-semibold mb-3" style={{ color: '#D4A843' }}>الحجوزات اليومية</p>
-        <DailyChart bookings={bookings} from={from} to={to} />
+        <p className="text-sm font-semibold mb-3" style={{ color: '#D4A843' }}>الإيرادات</p>
+        <div style={{ overflowX: 'auto' }}>
+          <div style={{ minWidth: 600 }}>
+            <DailyChart bookings={bookings} from={from} to={to} />
+          </div>
+        </div>
       </div>
 
     </div>
