@@ -202,6 +202,7 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
   const neighborhood = salon.meta?.neighborhood || city
   const heroImage = salon.meta?.hero_image || '/hero.jpg'
   const mapUrl = salon.meta?.map_url || null
+  console.log('[map_url raw]', salon.meta?.map_url)
   const featured = services.slice(0, 3)
 
   return (
