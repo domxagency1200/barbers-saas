@@ -11,7 +11,7 @@ export default function AdminLoginPage() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (email === 'admin@halaqy.com') {
+    if (email === 'admin@salony.com') {
       localStorage.setItem('isAdmin', 'true')
       router.push('/admin')
     } else {
@@ -32,7 +32,7 @@ export default function AdminLoginPage() {
               value={email}
               onChange={e => setEmail(e.target.value)}
               className="w-full rounded-xl border border-white/10 bg-[#1a1a1a] px-4 py-2.5 text-sm text-white placeholder:text-gray-600 focus:border-[#D4A843]/60 focus:outline-none"
-              placeholder="admin@halaqy.com"
+              placeholder="admin@salony.com"
             />
           </label>
           <label className="block space-y-1.5">

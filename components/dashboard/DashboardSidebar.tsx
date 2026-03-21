@@ -102,8 +102,21 @@ export default function DashboardSidebar() {
 
   async function handleLogout() {
     const supabase = createClient()
+
+    // Get current user's salon slug via salon_members
+    const { data: { user } } = await supabase.auth.getUser()
+    let slug: string | null = null
+    if (user) {
+      const { data: member } = await supabase
+        .from('salon_members')
+        .select('salons(slug)')
+        .eq('user_id', user.id)
+        .single()
+      slug = (member?.salons as any)?.slug ?? null
+    }
+
     await supabase.auth.signOut()
-    router.push('/dashboard/login')
+    router.push(slug ? `/${slug}` : '/dashboard/login')
   }
 
   function isActive(href: string) {

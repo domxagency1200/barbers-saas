@@ -12,11 +12,19 @@ export default async function SlugPage({
 
   const { data: salon, error } = await supabase
     .from('salons')
-    .select('id, name, whatsapp_number, city')
+    .select('id, name, whatsapp_number, city, is_active')
     .eq('slug', slug)
     .single()
 
   if (error || !salon) notFound()
+
+  if (salon.is_active === false) {
+    return (
+      <div style={{ backgroundColor: '#0f0f0f', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '1rem', fontFamily: 'sans-serif' }}>هذا الموقع غير متاح حالياً</p>
+      </div>
+    )
+  }
 
   const [{ data: barbers }, { data: services }] = await Promise.all([
     supabase

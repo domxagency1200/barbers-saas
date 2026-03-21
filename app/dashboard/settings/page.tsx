@@ -13,6 +13,7 @@ interface Salon {
   id: string
   name: string
   whatsapp_number: string | null
+  meta?: { tagline?: string; neighborhood?: string; hero_image?: string } | null
 }
 
 interface WorkingHours {
@@ -108,17 +109,37 @@ export default function SettingsPage() {
   const [newBarberName, setNewBarberName] = useState('')
   const [savingNewBarber, setSavingNewBarber] = useState(false)
 
+  const [metaForm, setMetaForm] = useState({ tagline: '', neighborhood: '', hero_image: '' })
+  const [metaEditing, setMetaEditing] = useState(false)
+  const [savingMeta, setSavingMeta] = useState(false)
+
   const [salonId, setSalonId] = useState<string | null>(null)
 
   useEffect(() => {
     async function init() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { router.push('/dashboard/login'); return }
-      const { data: member } = await supabase.from('salon_members').select('salon_id').eq('user_id', user.id).single()
-      const sid = member?.salon_id ?? null
-      setSalonId(sid)
-      await Promise.all([loadSalon(sid), loadHours(sid), loadBarbers(sid)])
-      setLoading(false)
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) { router.push('/dashboard/login'); return }
+
+        const { data: member, error: memberError } = await supabase
+          .from('salon_members')
+          .select('salon_id')
+          .eq('user_id', user.id)
+          .single()
+
+        if (memberError || !member?.salon_id) {
+          setError('تعذّر تحديد الصالون المرتبط بهذا الحساب')
+          return
+        }
+
+        const sid = member.salon_id
+        setSalonId(sid)
+        await Promise.all([loadSalon(sid), loadHours(sid), loadBarbers(sid)])
+      } catch {
+        setError('حدث خطأ أثناء تحميل البيانات')
+      } finally {
+        setLoading(false)
+      }
     }
     init()
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -130,6 +151,11 @@ export default function SettingsPage() {
     if (e || !data) { setError('تعذّر تحميل بيانات الصالون'); return }
     setSalon(data)
     setSalonForm({ name: data.name ?? '', whatsapp_number: data.whatsapp_number ?? '' })
+
+    // Load meta separately — column may not exist yet
+    const { data: metaRow } = await supabase.from('salons').select('meta').eq('id', sid).single()
+    const m = (metaRow as any)?.meta ?? {}
+    setMetaForm({ tagline: m.tagline ?? '', neighborhood: m.neighborhood ?? '', hero_image: m.hero_image ?? '' })
   }
 
   function startEditSalon() {
@@ -188,6 +214,26 @@ export default function SettingsPage() {
     setSavingHours(false)
   }
 
+  async function saveMeta() {
+    const id = salonId ?? salon?.id ?? null
+    if (!id) { setError('لم يتم تحديد الصالون'); return }
+    setSavingMeta(true)
+    setError(null)
+    const metaPayload = {
+      tagline: metaForm.tagline.trim(),
+      neighborhood: metaForm.neighborhood.trim(),
+      hero_image: metaForm.hero_image.trim(),
+    }
+    const { error: e } = await supabase.from('salons').update({ meta: metaPayload }).eq('id', id)
+    if (e) {
+      setError('تعذّر حفظ إعدادات الصفحة: ' + e.message)
+    } else {
+      setSalon(s => s ? { ...s, meta: metaPayload } : s)
+      setMetaEditing(false)
+    }
+    setSavingMeta(false)
+  }
+
   async function loadBarbers(sid: string | null) {
     let q = supabase.from('barbers').select('id, name, is_available').order('name')
     if (sid) q = q.eq('salon_id', sid)
@@ -221,7 +267,30 @@ export default function SettingsPage() {
     const payload: Record<string, unknown> = { name: newBarberName.trim(), is_available: true }
     if (salonId) payload.salon_id = salonId
     const { data, error: e } = await supabase.from('barbers').insert(payload).select('id, name, is_available').single()
-    if (!e && data) { setBarbers(prev => [...prev, data]); setNewBarberName(''); setAddingBarber(false) }
+    if (!e && data) {
+      setBarbers(prev => [...prev, data])
+      setNewBarberName('')
+      setAddingBarber(false)
+
+      // Insert default schedule for all 7 days using salon's working_hours
+      if (salonId) {
+        const { data: wh } = await supabase
+          .from('working_hours')
+          .select('open_at, close_at')
+          .eq('salon_id', salonId)
+          .single()
+        const open = wh?.open_at?.slice(0, 5) ?? '08:00'
+        const close = wh?.close_at?.slice(0, 5) ?? '22:00'
+        const schedules = [0, 1, 2, 3, 4, 5, 6].map(day => ({
+          barber_id: data.id,
+          day_of_week: day,
+          open_at: open,
+          close_at: close,
+          is_off: false,
+        }))
+        await supabase.from('barber_schedules').insert(schedules)
+      }
+    }
     setSavingNewBarber(false)
   }
 
@@ -333,6 +402,56 @@ export default function SettingsPage() {
               </div>
               <button onClick={() => { setHoursForm({ open_at: hours.open_at, close_at: hours.close_at }); setHoursEditing(true) }}
                 className="p-2 text-gray-600 hover:text-gray-300 rounded-lg hover:bg-white/5 transition-colors"><IconEdit /></button>
+            </div>
+          )}
+        </Section>
+
+        {/* Page meta */}
+        <Section title="إعدادات الصفحة">
+          {metaEditing ? (
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">وصف قصير</label>
+                <input value={metaForm.tagline} onChange={e => setMetaForm(f => ({ ...f, tagline: e.target.value }))}
+                  placeholder="مثال: أفضل صالون في الحي" className={inputCls} />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">الحي</label>
+                <input value={metaForm.neighborhood} onChange={e => setMetaForm(f => ({ ...f, neighborhood: e.target.value }))}
+                  placeholder="مثال: حي النزهة" className={inputCls} />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">رابط صورة الغلاف</label>
+                <input value={metaForm.hero_image} onChange={e => setMetaForm(f => ({ ...f, hero_image: e.target.value }))}
+                  placeholder="https://..." className={inputCls} dir="ltr" />
+              </div>
+              <div className="flex items-center justify-end gap-2 pt-1">
+                <button onClick={() => setMetaEditing(false)} className="px-4 py-2 text-sm text-gray-500 hover:text-gray-300">إلغاء</button>
+                <button onClick={saveMeta} disabled={savingMeta}
+                  className="px-5 py-2 text-sm font-medium rounded-xl disabled:opacity-40 transition-colors"
+                  style={{ backgroundColor: '#D4A843', color: '#1a1a1a' }}>
+                  {savingMeta ? 'جارٍ الحفظ...' : 'حفظ'}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-gray-500 w-24 shrink-0">وصف قصير</span>
+                  <span className="text-sm text-white">{salon?.meta?.tagline || '—'}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-gray-500 w-24 shrink-0">الحي</span>
+                  <span className="text-sm text-white">{salon?.meta?.neighborhood || '—'}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-gray-500 w-24 shrink-0">صورة الغلاف</span>
+                  <span className="text-sm text-gray-400 truncate max-w-[200px]" dir="ltr">{salon?.meta?.hero_image || '—'}</span>
+                </div>
+              </div>
+              <button onClick={() => setMetaEditing(true)}
+                className="p-2 text-gray-600 hover:text-gray-300 rounded-lg hover:bg-white/5 transition-colors shrink-0"><IconEdit /></button>
             </div>
           )}
         </Section>

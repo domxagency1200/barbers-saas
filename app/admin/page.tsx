@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import PricingCalculator from './PricingCalculator'
 
 export default async function AdminPage() {
   const supabase = await createClient()
@@ -42,6 +43,10 @@ export default async function AdminPage() {
             </p>
           </div>
         ))}
+      </div>
+
+      <div className="mt-8">
+        <PricingCalculator salonCount={salonCount ?? 0} />
       </div>
     </div>
   )

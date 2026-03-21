@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from 'react'
 interface Barber { id: string; name: string }
 interface Service { id: string; name_ar: string; price: number; duration_min: number }
 interface Props {
-  salon: { id: string; name: string; whatsapp_number: string | null; city: string | null }
+  salon: { id: string; name: string; whatsapp_number: string | null; city: string | null; working_hours?: string | null; meta?: { tagline?: string; neighborhood?: string; hero_image?: string } | null }
   barbers: Barber[]
   services: Service[]
   slug: string
@@ -17,15 +17,6 @@ function toArabicTimeLabel(h24: number, min: number) {
   const h12 = h24 % 12 === 0 ? 12 : h24 % 12
   return `${h12}:${pad2(min)} ${suffix}`
 }
-function buildSlots() {
-  const opts: { value: string; label: string }[] = []
-  for (let m = 8 * 60; m <= 22 * 60; m += 30) {
-    const h = Math.floor(m / 60), mm = m % 60
-    opts.push({ value: `${pad2(h)}:${pad2(mm)}`, label: toArabicTimeLabel(h, mm) })
-  }
-  return opts
-}
-const ALL_SLOTS = buildSlots()
 const SB_URL = 'https://vkemzfyenxxbjwferyms.supabase.co'
 const SB_KEY = 'sb_publishable_3T-Bz6_RheK-wikV9kO9jg_-rjQ0gua'
 const TENANT_ID = '4619cc68-fc96-4fec-bee7-bb4046b0fc1a'
@@ -203,6 +194,10 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
   }
 
   const city = salon.city ?? 'الرياض'
+  const workingHours = salon.working_hours || '08:00–22:00'
+  const tagline = salon.meta?.tagline || `مستوى جديد من العناية الرجالية في ${city} — تفاصيل دقيقة، أجواء راقية، بالحجز المسبق فقط.`
+  const neighborhood = salon.meta?.neighborhood || city
+  const heroImage = salon.meta?.hero_image || '/hero.jpg'
   const featured = services.slice(0, 3)
 
   return (
@@ -254,7 +249,7 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
         {/* ── HERO ── */}
         <section id="home" className="relative isolate min-h-screen scroll-mt-24 overflow-hidden flex items-center" aria-label="القسم الرئيسي">
           <div className="absolute inset-0 -z-10 overflow-hidden">
-            <div ref={heroBgRef} id="heroBg" className="absolute inset-[-10%]" style={{ backgroundImage: 'var(--hero-image)', backgroundSize: 'cover', backgroundPosition: 'center top' }} />
+            <div ref={heroBgRef} id="heroBg" className="absolute inset-[-10%]" style={{ backgroundImage: `url('${heroImage}')`, backgroundSize: 'cover', backgroundPosition: 'center top' }} />
             <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom,rgba(0,0,0,.18) 0%,rgba(15,15,15,.72) 55%,rgba(15,15,15,.98) 100%),radial-gradient(ellipse 90% 60% at 65% 5%,rgba(201,168,76,.13) 0%,transparent 65%),radial-gradient(ellipse 55% 75% at 5% 45%,rgba(255,255,255,.03) 0%,transparent 55%)' }} />
           </div>
 
@@ -272,7 +267,7 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
                 <span className="block text-white">العناية المثالية</span>
                 <span className="headline-gold block mt-1">للحلاقة الفاخرة</span>
               </h1>
-              <p className="mt-6 max-w-lg text-lg leading-relaxed text-white/60 sm:text-xl">مستوى جديد من العناية الرجالية في {city} — تفاصيل دقيقة، أجواء راقية، بالحجز المسبق فقط.</p>
+              <p className="mt-6 max-w-lg text-lg leading-relaxed text-white/60 sm:text-xl">{tagline}</p>
               <div className="mt-10 flex flex-wrap items-center gap-4">
                 <button type="button" onClick={() => openBooking()} className="btn-gold rounded-2xl px-8 py-4 text-base font-extrabold text-black focus:outline-none focus:ring-2 focus:ring-gold/60 focus:ring-offset-2 focus:ring-offset-black">احجز موعدك الآن</button>
                 <a href="#offers" className="group flex items-center gap-2 rounded-2xl border border-white/15 px-8 py-4 text-base font-bold text-white/80 transition-all duration-300 hover:border-gold/40 hover:text-white" style={{ background: 'rgba(255,255,255,.04)' }}>
@@ -282,8 +277,8 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
               </div>
               <div className="mt-12 grid gap-3 sm:grid-cols-3">
                 <div className="rounded-2xl border border-white/8 p-4" style={{ background: 'rgba(255,255,255,.04)', backdropFilter: 'blur(10px)' }}><div className="text-xs text-white/45 mb-1">الحجز</div><div className="text-sm font-bold">بالحجز المسبق فقط</div></div>
-                <div className="rounded-2xl border border-white/8 p-4" style={{ background: 'rgba(255,255,255,.04)', backdropFilter: 'blur(10px)' }}><div className="text-xs text-white/45 mb-1">الموقع</div><div className="text-sm font-bold">{city}</div></div>
-                <div className="rounded-2xl border border-white/8 p-4" style={{ background: 'rgba(255,255,255,.04)', backdropFilter: 'blur(10px)' }}><div className="text-xs text-white/45 mb-1">ساعات العمل</div><div className="text-sm font-bold">8:00 ص – 12:00 م</div></div>
+                <div className="rounded-2xl border border-white/8 p-4" style={{ background: 'rgba(255,255,255,.04)', backdropFilter: 'blur(10px)' }}><div className="text-xs text-white/45 mb-1">الموقع</div><div className="text-sm font-bold">{neighborhood}</div></div>
+                <div className="rounded-2xl border border-white/8 p-4" style={{ background: 'rgba(255,255,255,.04)', backdropFilter: 'blur(10px)' }}><div className="text-xs text-white/45 mb-1">ساعات العمل</div><div className="text-sm font-bold">{workingHours}</div></div>
               </div>
             </div>
 
@@ -307,11 +302,13 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
                     </div>
                     <button type="button" onClick={() => openBooking()} className="btn-gold mt-5 w-full rounded-xl px-4 py-3 text-sm font-extrabold text-black">ابدأ الحجز</button>
                   </div>
-                  <div className="mt-5 flex flex-wrap gap-2">
-                    {barbers.map(b => (
-                      <button key={b.id} type="button" onClick={() => openBooking('', b.name)} className="rounded-full border border-white/10 px-4 py-1.5 text-xs text-white/65 transition-all duration-200 hover:border-gold/40 hover:text-gold" style={{ background: 'rgba(255,255,255,.05)' }}>{b.name}</button>
-                    ))}
-                  </div>
+                  {barbers.length > 0 && (
+                    <div className="mt-5 flex flex-wrap gap-2">
+                      {barbers.map(b => (
+                        <button key={b.id} type="button" onClick={() => openBooking('', b.name)} className="rounded-full border border-white/10 px-4 py-1.5 text-xs text-white/65 transition-all duration-200 hover:border-gold/40 hover:text-gold" style={{ background: 'rgba(255,255,255,.05)' }}>{b.name}</button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -362,25 +359,29 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
               </div>
               <button type="button" onClick={() => openBooking()} className="w-full rounded-xl border border-gold/30 px-6 py-3 text-sm font-extrabold text-white/85 transition-all duration-200 hover:border-gold/55 hover:text-white sm:w-auto" style={{ background: 'rgba(255,255,255,.04)' }}>احجز الآن</button>
             </div>
-            <div className="mt-12 grid gap-6 md:grid-cols-3">
-              {featured.map((svc, i) => (
-                <article key={svc.id} className={`glass-card reveal reveal-d${i+1} rounded-3xl p-7${i === 1 ? ' border-gold/22' : ''}`}>
-                  {i === 1 && <div className="mb-3 inline-flex rounded-full px-3 py-1 text-xs font-bold text-gold bg-gold/12">الأكثر طلبًا</div>}
-                  <div className="flex items-start justify-between gap-4 mb-4">
-                    <h3 className="text-2xl font-extrabold">{svc.name_ar}</h3>
-                    <div className="flex-shrink-0 rounded-full px-4 py-1.5 text-sm font-bold text-black" style={{ background: 'linear-gradient(135deg,#E8C96B,#C9A84C)' }}>{svc.price} ر.س</div>
-                  </div>
-                  <p className="text-sm text-white/50 leading-relaxed mb-6">خدمة متميزة بأسلوب احترافي ونتيجة واضحة.</p>
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <span className="flex items-center gap-1.5 text-xs text-white/35">
-                      <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-                      {svc.duration_min} دقيقة
-                    </span>
-                    <button type="button" onClick={() => openBooking(svc.name_ar)} className="btn-gold w-full rounded-xl px-5 py-2.5 text-sm font-extrabold text-black sm:w-auto">احجز الآن</button>
-                  </div>
-                </article>
-              ))}
-            </div>
+            {featured.length === 0 ? (
+              <p className="mt-12 text-center text-white/40 text-sm">لا توجد خدمات حالياً</p>
+            ) : (
+              <div className="mt-12 grid gap-6 md:grid-cols-3">
+                {featured.map((svc, i) => (
+                  <article key={svc.id} className={`glass-card reveal reveal-d${i+1} rounded-3xl p-7${i === 1 ? ' border-gold/22' : ''}`}>
+                    {i === 1 && <div className="mb-3 inline-flex rounded-full px-3 py-1 text-xs font-bold text-gold bg-gold/12">الأكثر طلبًا</div>}
+                    <div className="flex items-start justify-between gap-4 mb-4">
+                      <h3 className="text-2xl font-extrabold">{svc.name_ar}</h3>
+                      <div className="flex-shrink-0 rounded-full px-4 py-1.5 text-sm font-bold text-black" style={{ background: 'linear-gradient(135deg,#E8C96B,#C9A84C)' }}>{svc.price} ر.س</div>
+                    </div>
+                    <p className="text-sm text-white/50 leading-relaxed mb-6">خدمة متميزة بأسلوب احترافي ونتيجة واضحة.</p>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <span className="flex items-center gap-1.5 text-xs text-white/35">
+                        <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                        {svc.duration_min} دقيقة
+                      </span>
+                      <button type="button" onClick={() => openBooking(svc.name_ar)} className="btn-gold w-full rounded-xl px-5 py-2.5 text-sm font-extrabold text-black sm:w-auto">احجز الآن</button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
           </div>
         </section>
 
@@ -392,26 +393,30 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
               <h2 className="text-3xl font-extrabold tracking-tight lg:text-4xl">قائمة الخدمات والأسعار</h2>
               <p className="mt-2 text-white/50 leading-relaxed">اختر الخدمة المناسبة—وسعرها متوفر عند الحجز أو في الصالون.</p>
             </div>
-            <div className="mt-12 overflow-hidden rounded-3xl border border-white/8 shadow-soft reveal" style={{ background: 'rgba(255,255,255,.7)' }}>
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[520px] text-right text-sm">
-                  <thead style={{ background: 'rgba(201,168,76,.06)' }}>
-                    <tr className="text-white/65">
-                      <th className="px-6 py-5 font-extrabold text-base">الخدمة</th>
-                      <th className="px-6 py-5 font-extrabold text-base">السعر</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/5">
-                    {services.map(svc => (
-                      <tr key={svc.id} className="transition-colors duration-150 hover:bg-white/3">
-                        <td className="px-6 py-4 font-bold">{svc.name_ar}</td>
-                        <td className="px-6 py-4 font-extrabold text-gold">{svc.price} ر.س</td>
+            {services.length === 0 ? (
+              <p className="mt-12 text-center text-white/40 text-sm">لا توجد خدمات حالياً</p>
+            ) : (
+              <div className="mt-12 overflow-hidden rounded-3xl border border-white/8 shadow-soft reveal" style={{ background: 'rgba(255,255,255,.7)' }}>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[520px] text-right text-sm">
+                    <thead style={{ background: 'rgba(201,168,76,.06)' }}>
+                      <tr className="text-white/65">
+                        <th className="px-6 py-5 font-extrabold text-base">الخدمة</th>
+                        <th className="px-6 py-5 font-extrabold text-base">السعر</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {services.map(svc => (
+                        <tr key={svc.id} className="transition-colors duration-150 hover:bg-white/3">
+                          <td className="px-6 py-4 font-bold">{svc.name_ar}</td>
+                          <td className="px-6 py-4 font-extrabold text-gold">{svc.price} ر.س</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
+            )}
             <div className="mt-8 flex justify-center reveal">
               <button type="button" onClick={() => openBooking()} className="btn-gold w-full max-w-xs rounded-xl px-6 py-3 text-center text-sm font-extrabold text-black focus:outline-none focus:ring-2 focus:ring-gold/60 focus:ring-offset-2 focus:ring-offset-black">احجز الآن</button>
             </div>
@@ -538,10 +543,14 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
             <span className="h-px w-12" style={{ background: 'linear-gradient(to right,rgba(201,168,76,.4),transparent)' }} />
           </div>
           <div className="font-extrabold text-lg text-white/85">{salon.name}</div>
-          <div className="mt-1 text-sm text-white/40">حجز مسبق فقط • 8:00 صباحًا – 12:00 ليلًا • جميع أيام الأسبوع</div>
+          <div className="mt-1 text-sm text-white/40">حجز مسبق فقط • {workingHours} • جميع أيام الأسبوع</div>
           <div className="mt-5 text-xs text-white/25">© {new Date().getFullYear()} جميع الحقوق محفوظة</div>
         </div>
       </footer>
+
+      <div className="py-4 text-center">
+        <a href="/dashboard/login" className="text-[11px] text-white/15 hover:text-white/30 transition-colors">بوابة الإدارة</a>
+      </div>
 
       {/* ── BOOKING MODAL ── */}
       {bookingOpen && (
@@ -607,7 +616,7 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
                     {timeOpts.map(o => <option key={o.value} value={o.value} disabled={o.booked}>{o.booked ? `${o.label} (محجوز)` : o.label}</option>)}
                   </select>
                 </label>
-                <p className="text-xs text-white/30">الأوقات المتاحة كل 30 دقيقة بين 8:00 صباحًا و 12:00 ليلًا.</p>
+                <p className="text-xs text-white/30">الأوقات المتاحة كل 30 دقيقة حسب جدول الحلاق.</p>
               </div>
 
               {formMsg && (

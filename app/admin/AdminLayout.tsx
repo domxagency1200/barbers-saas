@@ -22,7 +22,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Sidebar */}
       <aside className="w-56 shrink-0 flex flex-col border-r border-white/10" style={{ backgroundColor: '#141414' }}>
         <div className="px-5 py-5 border-b border-white/10">
-          <span className="text-base font-extrabold" style={{ color: '#D4A843' }}>Halaqy Admin</span>
+          <span className="text-base font-extrabold" style={{ color: '#D4A843' }}>Salony Admin</span>
         </div>
 
         <nav className="flex-1 px-3 py-4 space-y-1">

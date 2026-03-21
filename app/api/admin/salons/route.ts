@@ -14,7 +14,7 @@ export async function GET() {
   const supabase = await createServerClient()
   const { data, error } = await supabase
     .from('salons')
-    .select('id, name, slug, city, plan, created_at')
+    .select('id, name, slug, city, plan, is_active, created_at')
     .order('created_at', { ascending: false })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -61,6 +61,11 @@ export async function POST(req: NextRequest) {
     await supabase.auth.admin.deleteUser(authData.user.id)
     return NextResponse.json({ error: memberError.message }, { status: 500 })
   }
+
+  // 4. Create default working hours
+  await supabase
+    .from('working_hours')
+    .insert({ salon_id: salon.id, open_at: '08:00', close_at: '22:00' })
 
   return NextResponse.json({ id: salon.id }, { status: 201 })
 }
