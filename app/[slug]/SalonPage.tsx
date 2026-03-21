@@ -132,18 +132,24 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
   useEffect(() => {
     let cancelled = false
     async function fill() {
-      let booked = new Set<string>()
-      if (barber && date) {
-        try {
-          const res = await fetch(`${SB_URL}/rest/v1/Bookings?select=time&barber=eq.${encodeURIComponent(barber)}&date=eq.${encodeURIComponent(date)}`, { headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` } })
-          if (res.ok) { const rows: any[] = await res.json(); rows.forEach(r => booked.add(r.time)) }
-        } catch { }
-      }
-      if (!cancelled) setTimeOpts(ALL_SLOTS.map(o => ({ ...o, booked: booked.has(o.value) })))
+      if (!barber || !date) { if (!cancelled) setTimeOpts([]); return }
+      const barberObj = barbers.find(b => b.name === barber)
+      if (!barberObj) { if (!cancelled) setTimeOpts([]); return }
+      try {
+        const res = await fetch(`/api/availability?barber_id=${barberObj.id}&date=${date}&duration=30&utcOffset=180`)
+        if (res.ok) {
+          const json = await res.json()
+          const slots: string[] = json.slots ?? []
+          if (!cancelled) setTimeOpts(slots.map(s => {
+            const [h, m] = s.split(':').map(Number)
+            return { value: s, label: toArabicTimeLabel(h, m), booked: false }
+          }))
+        }
+      } catch { if (!cancelled) setTimeOpts([]) }
     }
     fill()
     return () => { cancelled = true }
-  }, [barber, date])
+  }, [barber, date, barbers])
 
   function openBooking(svc = '', brb = '') {
     setBookingOpen(true); setFormMsg(null)
