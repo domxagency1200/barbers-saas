@@ -217,7 +217,7 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
     if (!mapUrl) return 'https://maps.google.com'
     const lat = mapUrl.match(/!3d(-?\d+\.\d+)/)?.[1]
     const lng = mapUrl.match(/!2d(-?\d+\.\d+)/)?.[1]
-    if (lat && lng) return `https://maps.google.com/?q=${lat},${lng}&z=17`
+    if (lat && lng) return `https://maps.google.com/?q=${lat},${lng}&ll=${lat},${lng}&z=19`
     return mapUrl.replace('maps/embed', 'maps')
   })()
   const featured = services.slice(0, 3)
