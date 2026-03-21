@@ -213,7 +213,13 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
   const neighborhood = salon.meta?.neighborhood || city
   const heroImage = salon.meta?.hero_image || '/hero.jpg'
   const mapUrl = salon.meta?.map_url || null
-  const mapHref = mapUrl ? mapUrl.replace('maps/embed', 'maps') : 'https://maps.google.com'
+  const mapHref = (() => {
+    if (!mapUrl) return 'https://maps.google.com'
+    const lat = mapUrl.match(/!3d(-?\d+\.\d+)/)?.[1]
+    const lng = mapUrl.match(/!2d(-?\d+\.\d+)/)?.[1]
+    if (lat && lng) return `https://maps.google.com/?q=${lat},${lng}`
+    return mapUrl.replace('maps/embed', 'maps')
+  })()
   const featured = services.slice(0, 3)
 
   return (
