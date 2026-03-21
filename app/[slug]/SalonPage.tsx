@@ -213,7 +213,7 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
   const neighborhood = salon.meta?.neighborhood || city
   const heroImage = salon.meta?.hero_image || '/hero.jpg'
   const mapUrl = salon.meta?.map_url || null
-  const mapHref = `https://maps.google.com/?q=${encodeURIComponent(city)}`
+  const mapHref = mapUrl ? mapUrl.replace('maps/embed', 'maps') : 'https://maps.google.com'
   const featured = services.slice(0, 3)
 
   return (
