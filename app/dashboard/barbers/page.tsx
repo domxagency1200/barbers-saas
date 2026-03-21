@@ -122,14 +122,14 @@ export default function BarbersPage() {
     setSaving(true)
     setEditError(null)
 
-    const { error: e } = await supabase
+    const { error: updateError } = await supabase
       .from('barbers')
       .update({ name: editName.trim(), avatar_url: editAvatarUrl.trim() || null })
       .eq('id', editBarber.id)
       .eq('salon_id', salonId)
 
-    if (e) {
-      setEditError('تعذّر تحديث بيانات الحلاق: ' + e.message)
+    if (updateError) {
+      setEditError('تعذّر تحديث بيانات الحلاق: ' + updateError.message)
     } else {
       setEditBarber(null)
       await loadBarbers(salonId)
