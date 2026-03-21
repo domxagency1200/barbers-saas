@@ -563,8 +563,8 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
         </div>
       </footer>
 
-      <div className="py-4 text-center">
-        <a href="/dashboard/login" className="text-[11px] text-white/15 hover:text-white/30 transition-colors">بوابة الإدارة</a>
+      <div className="py-8 text-center">
+        <a href="/dashboard/login" className="btn-gold inline-block rounded-xl px-6 py-3 text-sm font-bold text-black">بوابة الإدارة</a>
       </div>
 
       {/* ── BOOKING MODAL ── */}
