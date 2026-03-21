@@ -157,6 +157,7 @@ function MonthCalendar({
 export default function NewDashboardClient({ todayBookings, monthBookings }: Props) {
   const now = new Date()
   const [selectedDay, setSelectedDay] = useState(now.getDate())
+  const [expandedBarber, setExpandedBarber] = useState<string | null>(null)
 
   const barberGroups = groupByBarber(todayBookings)
   const todayRevenue = todayBookings.reduce((s, b) => s + (b.services?.price ?? 0), 0)
@@ -229,26 +230,48 @@ export default function NewDashboardClient({ todayBookings, monthBookings }: Pro
             <p className="text-gray-500 text-sm">لا توجد حجوزات في هذا اليوم</p>
           </div>
         ) : (
-          <div className="space-y-3">
-            {selectedDayBookings.map(b => (
-              <div key={b.id} className="rounded-2xl border border-white/10 p-4 space-y-2" style={{ backgroundColor: '#242424' }}>
-                <div className="flex items-center justify-between">
-                  <p className="font-semibold text-white text-sm">{b.customers?.name ?? '—'}</p>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLOR[b.status] ?? 'bg-white/10 text-gray-400'}`}>
-                    {STATUS_LABEL[b.status] ?? b.status}
-                  </span>
+          <div className="space-y-2">
+            {groupByBarber(selectedDayBookings).map(({ name, bookings: bList }) => {
+              const now2 = new Date()
+              const completed = bList.filter(b => new Date(b.ends_at) < now2).length
+              const pending = bList.filter(b => new Date(b.ends_at) >= now2 || b.status === 'pending').length
+              const isExpanded = expandedBarber === name
+              return (
+                <div key={name} className="rounded-2xl border border-white/10 overflow-hidden" style={{ backgroundColor: '#242424' }}>
+                  <button
+                    onClick={() => setExpandedBarber(isExpanded ? null : name)}
+                    className="w-full p-4 flex items-center justify-between"
+                  >
+                    <p className="font-semibold text-white text-sm">{name}</p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-green-900/40 text-green-400">{completed} منجز</span>
+                      <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-yellow-900/40 text-yellow-400">{pending} قيد الانتظار</span>
+                    </div>
+                  </button>
+                  {isExpanded && (
+                    <div className="border-t border-white/10 divide-y divide-white/5">
+                      {bList.map(b => {
+                        const isDone = new Date(b.ends_at) < now2
+                        return (
+                          <div key={b.id} className="px-4 py-3 flex items-center justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="text-sm text-white font-medium truncate">{b.customers?.name ?? '—'}</p>
+                              <p className="text-xs text-gray-500 truncate">{b.services?.name_ar ?? '—'}</p>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <span className="text-xs text-gray-400">{formatTime(b.starts_at)}</span>
+                              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isDone ? 'bg-green-900/40 text-green-400' : 'bg-yellow-900/40 text-yellow-400'}`}>
+                                {isDone ? 'منجز' : 'قيد الانتظار'}
+                              </span>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
-                <p className="text-xs text-gray-500">{b.customers?.phone}</p>
-                <div className="flex items-center justify-between text-xs text-gray-400">
-                  <span>{b.services?.name_ar ?? '—'}</span>
-                  <span className="font-medium text-gray-300">{formatTime(b.starts_at)}</span>
-                </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-gray-500">{b.barbers?.name ?? '—'}</span>
-                  <span style={{ color: '#D4A843' }}>{b.services?.price ?? 0} ر.س</span>
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>
