@@ -2,6 +2,17 @@
 
 import { useState, useEffect, useRef } from 'react'
 
+function toEmbedUrl(url: string): string {
+  if (!url) return ''
+  if (url.includes('/maps/embed')) return url
+  const coord = url.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
+  if (coord) return `https://www.google.com/maps?q=${coord[1]},${coord[2]}&output=embed`
+  try {
+    const u = new URL(url)
+    u.searchParams.set('output', 'embed')
+    return u.toString()
+  } catch { return url }
+}
 
 interface Barber { id: string; name: string }
 interface Service { id: string; name_ar: string; price: number; duration_min: number }
@@ -542,7 +553,7 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
             </div>
             <div className="mt-12 overflow-hidden rounded-3xl border border-white/8 shadow-soft reveal">
               <iframe title={`موقع ${salon.name}`} className="h-[420px] w-full" loading="lazy" referrerPolicy="no-referrer-when-downgrade"
-                src={mapUrl} />
+                src={toEmbedUrl(mapUrl!)} />
             </div>
           </div>
         </section>

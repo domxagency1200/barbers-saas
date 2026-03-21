@@ -232,7 +232,7 @@ export default function SettingsPage() {
       tagline: metaForm.tagline.trim(),
       neighborhood: metaForm.neighborhood.trim(),
       hero_image: metaForm.hero_image.trim(),
-      map_url: extractMapSrc(metaForm.map_url.trim()),
+      map_url: metaForm.map_url.trim(),
     }
     const { error: e } = await supabase.from('salons').update({ meta: metaPayload }).eq('id', id)
     if (e) {
