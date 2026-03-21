@@ -2,6 +2,18 @@
 
 import { useState, useEffect, useRef } from 'react'
 
+function toEmbedUrl(url: string): string {
+  if (!url) return ''
+  if (url.includes('/maps/embed')) return url
+  const coord = url.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
+  if (coord) return `https://www.google.com/maps?q=${coord[1]},${coord[2]}&output=embed`
+  try {
+    const u = new URL(url)
+    u.searchParams.set('output', 'embed')
+    return u.toString()
+  } catch { return url }
+}
+
 interface Barber { id: string; name: string }
 interface Service { id: string; name_ar: string; price: number; duration_min: number }
 interface Props {
@@ -539,14 +551,10 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
                 افتح في خرائط Google
               </a>
             </div>
-            <a href={mapUrl} target="_blank" rel="noopener noreferrer"
-              className="mt-12 flex h-[300px] w-full items-center justify-center overflow-hidden rounded-3xl border border-white/8 shadow-soft reveal transition-opacity hover:opacity-80"
-              style={{ background: 'rgba(255,255,255,.04)' }}>
-              <div className="flex flex-col items-center gap-4 text-center">
-                <svg className="h-14 w-14 text-gold/60" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-                <span className="text-sm font-bold text-white/60">انقر لفتح الموقع في خرائط Google</span>
-              </div>
-            </a>
+            <div className="mt-12 overflow-hidden rounded-3xl border border-white/8 shadow-soft reveal">
+              <iframe title={`موقع ${salon.name}`} className="h-[420px] w-full" loading="lazy" referrerPolicy="no-referrer-when-downgrade"
+                src={toEmbedUrl(mapUrl)} />
+            </div>
           </div>
         </section>
         )}

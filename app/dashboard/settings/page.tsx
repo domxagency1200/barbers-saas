@@ -7,6 +7,18 @@ import { Cairo } from 'next/font/google'
 
 const cairo = Cairo({ subsets: ['arabic'], display: 'swap' })
 
+function toEmbedUrl(url: string): string {
+  if (!url) return ''
+  if (url.includes('/maps/embed')) return url
+  const coord = url.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
+  if (coord) return `https://www.google.com/maps?q=${coord[1]},${coord[2]}&output=embed`
+  try {
+    const u = new URL(url)
+    u.searchParams.set('output', 'embed')
+    return u.toString()
+  } catch { return url }
+}
+
 // ── Types ────────────────────────────────────────────────────
 
 interface Salon {
@@ -223,7 +235,7 @@ export default function SettingsPage() {
       tagline: metaForm.tagline.trim(),
       neighborhood: metaForm.neighborhood.trim(),
       hero_image: metaForm.hero_image.trim(),
-      map_url: metaForm.map_url.trim(),
+      map_url: toEmbedUrl(metaForm.map_url.trim()),
     }
     const { error: e } = await supabase.from('salons').update({ meta: metaPayload }).eq('id', id)
     if (e) {
