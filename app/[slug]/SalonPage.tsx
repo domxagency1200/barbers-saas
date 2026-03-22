@@ -271,13 +271,13 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
 
       <main>
         {/* ── HERO ── */}
-        <section id="home" className="relative isolate min-h-screen scroll-mt-24 overflow-hidden flex items-center" aria-label="القسم الرئيسي">
+        <section id="home" className="relative isolate min-h-[100svh] lg:min-h-screen scroll-mt-24 overflow-hidden flex items-center" aria-label="القسم الرئيسي">
           <div className="absolute inset-0 -z-10 overflow-hidden">
-            <div ref={heroBgRef} id="heroBg" className="absolute inset-[-10%]" style={{ backgroundImage: `url('${heroImage}')`, backgroundSize: 'cover', backgroundPosition: 'center top' }} />
+            <div ref={heroBgRef} id="heroBg" className="absolute inset-[-10%]" style={{ backgroundImage: `url('${heroImage}')`, backgroundSize: 'cover', backgroundPosition: 'center 20%' }} />
             <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom,rgba(0,0,0,.18) 0%,rgba(15,15,15,.72) 55%,rgba(15,15,15,.98) 100%),radial-gradient(ellipse 90% 60% at 65% 5%,rgba(201,168,76,.13) 0%,transparent 65%),radial-gradient(ellipse 55% 75% at 5% 45%,rgba(255,255,255,.03) 0%,transparent 55%)' }} />
           </div>
 
-          <div className="mx-auto grid w-full max-w-6xl items-center gap-12 px-4 pb-16 pt-36 lg:grid-cols-12 lg:gap-16 lg:px-6 lg:pt-44 lg:pb-24">
+          <div className="mx-auto grid w-full max-w-6xl items-center gap-8 px-4 pb-12 pt-28 lg:grid-cols-12 lg:gap-16 lg:px-6 lg:pt-44 lg:pb-24">
             <div className="lg:col-span-7 reveal">
               <div className="float-anim mb-8 inline-flex items-center gap-2.5 rounded-full border border-gold/30 px-5 py-2 text-sm bg-gold/7">
                 <svg className="h-3.5 w-3.5 text-gold flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
@@ -287,14 +287,14 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
                 <span className="text-white/35">•</span>
                 <span className="text-white/70">+10 سنوات خبرة</span>
               </div>
-              <h1 className="text-5xl font-extrabold leading-[1.1] tracking-tight sm:text-6xl lg:text-[4.5rem]">
+              <h1 className="text-3xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl lg:text-[4.5rem]">
                 <span className="block text-white">العناية المثالية</span>
                 <span className="headline-gold block mt-1">للحلاقة الفاخرة</span>
               </h1>
-              <p className="mt-6 max-w-lg text-lg leading-relaxed text-white/60 sm:text-xl">{tagline}</p>
-              <div className="mt-10 flex flex-wrap items-center gap-4">
-                <button type="button" onClick={() => openBooking()} className="btn-gold rounded-2xl px-8 py-4 text-base font-extrabold text-black focus:outline-none focus:ring-2 focus:ring-gold/60 focus:ring-offset-2 focus:ring-offset-black">احجز موعدك الآن</button>
-                <a href="#offers" className="group flex items-center gap-2 rounded-2xl border border-white/15 px-8 py-4 text-base font-bold text-white/80 transition-all duration-300 hover:border-gold/40 hover:text-white" style={{ background: 'rgba(255,255,255,.04)' }}>
+              <p className="mt-4 max-w-lg text-base leading-relaxed text-white/60 sm:text-lg lg:text-xl">{tagline}</p>
+              <div className="mt-7 flex flex-wrap items-center gap-3 lg:mt-10 lg:gap-4">
+                <button type="button" onClick={() => openBooking()} className="btn-gold rounded-2xl px-6 py-3 text-sm font-extrabold text-black sm:px-8 sm:py-4 sm:text-base focus:outline-none focus:ring-2 focus:ring-gold/60 focus:ring-offset-2 focus:ring-offset-black">احجز موعدك الآن</button>
+                <a href="#offers" className="group flex items-center gap-2 rounded-2xl border border-white/15 px-6 py-3 text-sm font-bold text-white/80 transition-all duration-300 sm:px-8 sm:py-4 sm:text-base hover:border-gold/40 hover:text-white" style={{ background: 'rgba(255,255,255,.04)' }}>
                   عروضنا
                   <svg className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5m0 0l7-7m-7 7l7 7"/></svg>
                 </a>
