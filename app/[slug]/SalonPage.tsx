@@ -17,7 +17,7 @@ function toEmbedUrl(url: string): string {
 interface Barber { id: string; name: string }
 interface Service { id: string; name_ar: string; price: number; duration_min: number }
 interface Props {
-  salon: { id: string; name: string; whatsapp_number: string | null; city: string | null; working_hours?: string | null; meta?: { hero_title?: string; tagline?: string; neighborhood?: string; hero_image?: string; feature_image?: string; map_url?: string; map_embed_url?: string; map_place_url?: string; offers?: { id: string; title: string; badge?: string; description?: string; price_current?: string; price_old?: string; is_active: boolean; service_ids?: string[] }[] } | null }
+  salon: { id: string; name: string; whatsapp_number: string | null; city: string | null; working_hours?: string | null; meta?: { hero_title?: string; tagline?: string; neighborhood?: string; hero_image?: string; feature_image?: string; map_url?: string; map_embed_url?: string; map_place_url?: string; card_theme?: string; custom_color?: string; offers?: { id: string; title: string; badge?: string; description?: string; price_current?: string; price_old?: string; is_active: boolean; service_ids?: string[] }[] } | null }
   barbers: Barber[]
   services: Service[]
   slug: string
@@ -277,7 +277,7 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
             <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom,rgba(0,0,0,.18) 0%,rgba(15,15,15,.72) 55%,rgba(15,15,15,.98) 100%),radial-gradient(ellipse 90% 60% at 65% 5%,rgba(201,168,76,.13) 0%,transparent 65%),radial-gradient(ellipse 55% 75% at 5% 45%,rgba(255,255,255,.03) 0%,transparent 55%)' }} />
           </div>
 
-          <div className="mx-auto w-full max-w-6xl px-4 pb-12 pt-28 lg:px-6 lg:pt-44 lg:pb-24">
+          <div className="mx-auto w-full max-w-6xl px-4 pb-24 pt-28 lg:px-6 lg:pt-44 lg:pb-32">
             <div className="reveal">
               <div className="float-anim mb-8 inline-flex items-center gap-2.5 rounded-full border border-gold/30 px-5 py-2 text-sm bg-gold/7">
                 <svg className="h-3.5 w-3.5 text-gold flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
@@ -364,41 +364,81 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
               <div className="sec-label">العروض الحصرية</div>
               <h2 className="text-2xl font-extrabold tracking-tight sm:text-3xl lg:text-4xl">عروضنا</h2>
             </div>
-            <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {salon.meta!.offers!.filter(o => o.is_active).slice(0, 3).map((offer, i) => {
-                const offerServices = (offer.service_ids ?? []).map(sid => services.find(s => s.id === sid)?.name_ar).filter(Boolean)
+            {(() => {
+                const themeMap: Record<string, { accent: string; accentLight: string; glow: string; btnFrom: string; btnTo: string }> = {
+                  gold:   { accent: '#D4AF37', accentLight: '#e7c873', glow: 'rgba(212,175,55,0.13)',  btnFrom: '#e7c873', btnTo: '#D4AF37' },
+                  blue:   { accent: '#3B82F6', accentLight: '#93c5fd', glow: 'rgba(59,130,246,0.13)',  btnFrom: '#93c5fd', btnTo: '#3B82F6' },
+                  green:  { accent: '#10B981', accentLight: '#6ee7b7', glow: 'rgba(16,185,129,0.13)',  btnFrom: '#6ee7b7', btnTo: '#10B981' },
+                }
+                const resolvedThemeKey = salon.meta?.card_theme ?? 'gold'
+                const theme = resolvedThemeKey === 'custom' && salon.meta?.custom_color
+                  ? (() => { const c = salon.meta!.custom_color!; return { accent: c, accentLight: c, glow: `${c}22`, btnFrom: c, btnTo: c } })()
+                  : (themeMap[resolvedThemeKey] ?? themeMap.gold)
                 return (
-                  <article key={offer.id} className={`reveal reveal-d${i + 1} relative flex flex-col overflow-hidden rounded-2xl border border-white/8 p-6`}
-                    style={{ background: 'linear-gradient(145deg,rgba(30,24,12,.95) 0%,rgba(18,15,8,.98) 100%)', backdropFilter: 'blur(12px)' }}>
-                    <div className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(ellipse 80% 50% at 50% 0%,rgba(201,168,76,.07),transparent 70%)' }} />
-                    <div className="relative flex flex-col h-full">
-                      {offer.badge && (
-                        <span className="mb-3 self-start inline-flex rounded-full border border-gold/30 px-3 py-0.5 text-xs font-bold text-gold bg-gold/8">{offer.badge}</span>
-                      )}
-                      <h3 className="text-lg font-extrabold text-white mb-2 sm:text-xl">{offer.title}</h3>
-                      {offer.description && <p className="text-sm text-white/50 leading-relaxed mb-4">{offer.description}</p>}
-                      {offerServices.length > 0 && (
-                        <ul className="mb-5 space-y-1.5">
-                          {offerServices.map(name => (
-                            <li key={name} className="flex items-center gap-2 text-sm text-white/65">
-                              <svg className="h-3.5 w-3.5 shrink-0 text-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
-                              {name}
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                      <div className="mt-auto pt-4 border-t border-white/8">
-                        <div className="flex items-baseline gap-2 mb-4">
-                          {offer.price_current && <span className="text-2xl font-extrabold text-gold">{offer.price_current} ر.س</span>}
-                          {offer.price_old && <span className="text-sm text-white/30 line-through">{offer.price_old} ر.س</span>}
+                  <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    {salon.meta!.offers!.filter(o => o.is_active).slice(0, 3).map((offer, i) => {
+                      const offerServices = (offer.service_ids ?? []).map(sid => services.find(s => s.id === sid)?.name_ar).filter(Boolean)
+                      return (
+                        <div key={offer.id} dir="rtl" className={`reveal reveal-d${i + 1} relative rounded-2xl p-6 overflow-hidden border hover:scale-[1.02]`}
+                          style={{ transition: 'all 300ms', backgroundColor: '#0B0B0B', borderColor: `${theme.accent}1a`, boxShadow: `0 0 24px ${theme.glow}` }}>
+                          {/* Soft radial glow — left side only */}
+                          <div className="absolute inset-0 pointer-events-none" style={{ background: `radial-gradient(ellipse 60% 80% at 0% 50%, ${theme.glow}, transparent)` }} />
+                          {/* Top-right pill badge */}
+                          {offer.badge && (
+                            <div className="absolute top-4 left-4 px-3 py-1 text-xs font-medium rounded-full border"
+                              style={{ backgroundColor: `${theme.accent}1a`, color: theme.accentLight, borderColor: `${theme.accent}40` }}>
+                              {offer.badge}
+                            </div>
+                          )}
+                          <div className="relative">
+                            {offer.badge && <div className="mb-6" />}
+                            {/* Title */}
+                            <h3 className="text-2xl font-extrabold text-white mb-1.5 leading-tight tracking-tight">{offer.title}</h3>
+                            {/* Description */}
+                            {offer.description && <p className="text-white/40 text-sm leading-relaxed mb-5">{offer.description}</p>}
+                            {/* Services */}
+                            {offerServices.length > 0 && (
+                              <ul className="mb-5 space-y-3">
+                                {offerServices.map(name => (
+                                  <li key={name} className="flex items-center gap-3 text-sm text-white/75">
+                                    <span className="text-[11px] shrink-0 leading-none" style={{ color: theme.accent }}>✦</span>
+                                    <span>{name}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                            {/* Divider */}
+                            <div className="border-t border-white/8 mb-4" />
+                            {/* Price */}
+                            <div className="mb-5">
+                              {offer.price_current && <div className="text-3xl font-extrabold tracking-tight" style={{ color: theme.accentLight }}>{offer.price_current} <span className="text-lg">ر.س</span></div>}
+                              {offer.price_old && (
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className="text-xs text-white/35 line-through">{offer.price_old} ر.س</span>
+                                </div>
+                              )}
+                              {offer.price_old && offer.price_current && (() => {
+                                const saving = Math.round(parseFloat(offer.price_old) - parseFloat(offer.price_current))
+                                return saving > 0 ? (
+                                  <div className="mt-1.5 text-xs font-semibold" style={{ color: theme.accent }}>وفّر {saving} ريال</div>
+                                ) : null
+                              })()}
+                            </div>
+                            {/* Button */}
+                            <button type="button" onClick={() => openBooking(offer.title)}
+                              className="w-full py-3 rounded-xl text-sm font-semibold text-black transition-all duration-300"
+                              style={{ background: `linear-gradient(to right, ${theme.btnFrom}, ${theme.btnTo})`, boxShadow: `0 0 0px ${theme.glow}` }}
+                              onMouseEnter={e => (e.currentTarget.style.boxShadow = `0 0 18px ${theme.glow}`)}
+                              onMouseLeave={e => (e.currentTarget.style.boxShadow = `0 0 0px ${theme.glow}`)}>
+                              احجز الآن
+                            </button>
+                          </div>
                         </div>
-                        <button type="button" onClick={() => openBooking(offer.title)} className="btn-gold w-full rounded-xl px-4 py-2.5 text-sm font-extrabold text-black">احجز الآن</button>
-                      </div>
-                    </div>
-                  </article>
+                      )
+                    })}
+                  </div>
                 )
-              })}
-            </div>
+              })()}
           </div>
         </section>
         )}

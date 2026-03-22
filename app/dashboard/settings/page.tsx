@@ -22,7 +22,7 @@ interface Salon {
   id: string
   name: string
   whatsapp_number: string | null
-  meta?: { hero_title?: string; tagline?: string; neighborhood?: string; hero_image?: string; feature_image?: string; map_place_url?: string; map_embed_url?: string; offers?: Offer[] } | null
+  meta?: { hero_title?: string; tagline?: string; neighborhood?: string; hero_image?: string; feature_image?: string; map_place_url?: string; map_embed_url?: string; card_theme?: string; custom_color?: string } | null
 }
 
 interface WorkingHours {
@@ -35,22 +35,6 @@ interface Barber {
   id: string
   name: string
   is_available: boolean
-}
-
-interface Service {
-  id: string
-  name_ar: string
-}
-
-interface Offer {
-  id: string
-  title: string
-  badge: string
-  description: string
-  price_current: string
-  price_old: string
-  is_active: boolean
-  service_ids: string[]
 }
 
 // ── Icons ────────────────────────────────────────────────────
@@ -140,13 +124,9 @@ export default function SettingsPage() {
   const [uploadingImage, setUploadingImage] = useState(false)
   const [uploadingFeatureImage, setUploadingFeatureImage] = useState(false)
 
-  const [salonServices, setSalonServices] = useState<Service[]>([])
-  const [offers, setOffers] = useState<Offer[]>([])
-  const [offerForm, setOfferForm] = useState({ title: '', badge: '', description: '', price_current: '', price_old: '', is_active: true, service_ids: [] as string[] })
-  const [addingOffer, setAddingOffer] = useState(false)
-  const [editingOfferId, setEditingOfferId] = useState<string | null>(null)
-  const [savingOffer, setSavingOffer] = useState(false)
-  const [deletingOfferId, setDeletingOfferId] = useState<string | null>(null)
+  const [cardTheme, setCardTheme] = useState<string>('gold')
+  const [customColor, setCustomColor] = useState<string>('#FFAA00')
+  const [savingTheme, setSavingTheme] = useState(false)
 
   const [salonId, setSalonId] = useState<string | null>(null)
 
@@ -169,8 +149,6 @@ export default function SettingsPage() {
 
         const sid = member.salon_id
         setSalonId(sid)
-        const { data: svcs } = await supabase.from('services').select('id, name_ar').eq('salon_id', sid).eq('is_active', true).order('name_ar')
-        setSalonServices(svcs ?? [])
         await Promise.all([loadSalon(sid), loadHours(sid), loadBarbers(sid)])
       } catch {
         setError('حدث خطأ أثناء تحميل البيانات')
@@ -193,7 +171,8 @@ export default function SettingsPage() {
     const { data: metaRow } = await supabase.from('salons').select('meta').eq('id', sid).single()
     const m = (metaRow as any)?.meta ?? {}
     setMetaForm({ hero_title: m.hero_title ?? '', tagline: m.tagline ?? '', neighborhood: m.neighborhood ?? '', hero_image: m.hero_image ?? '', feature_image: m.feature_image ?? '', map_place_url: m.map_place_url ?? '', map_embed_url: m.map_embed_url ?? '' })
-    setOffers(m.offers ?? [])
+    setCardTheme(m.card_theme ?? 'gold')
+    setCustomColor(m.custom_color ?? '#FFAA00')
   }
 
   function startEditSalon() {
@@ -250,18 +229,6 @@ export default function SettingsPage() {
       setHoursEditing(false)
     }
     setSavingHours(false)
-  }
-
-  async function saveOffers(updatedOffers: Offer[]) {
-    const id = salonId ?? salon?.id ?? null
-    if (!id) return
-    setSavingOffer(true)
-    setError(null)
-    const { data: current } = await supabase.from('salons').select('meta').eq('id', id).single()
-    const existingMeta = (current as any)?.meta ?? {}
-    const { error: e } = await supabase.from('salons').update({ meta: { ...existingMeta, offers: updatedOffers } }).eq('id', id)
-    if (e) { setError('تعذّر حفظ العروض: ' + e.message) } else { setOffers(updatedOffers) }
-    setSavingOffer(false)
   }
 
   async function uploadHeroImage(file: File) {
@@ -361,6 +328,18 @@ export default function SettingsPage() {
       setAddingBarber(false)
     }
     setSavingNewBarber(false)
+  }
+
+  async function saveCardTheme(theme: string, color?: string) {
+    if (!salonId) return
+    setSavingTheme(true)
+    const { data: current } = await supabase.from('salons').select('meta').eq('id', salonId).single()
+    const existingMeta = (current as any)?.meta ?? {}
+    const patch: Record<string, string> = { card_theme: theme }
+    if (color) patch.custom_color = color
+    const { error: e } = await supabase.from('salons').update({ meta: { ...existingMeta, ...patch } }).eq('id', salonId)
+    if (!e) setCardTheme(theme)
+    setSavingTheme(false)
   }
 
   if (loading) {
@@ -647,131 +626,55 @@ export default function SettingsPage() {
           </div>
         </Section>
 
-        {/* Offers */}
-        <Section title="العروض">
+        {/* Card Theme */}
+        <Section title="ثيم بطاقة العروض">
           <div className="space-y-3">
-            {offers.map(offer => (
-              <div key={offer.id} className="rounded-xl border border-white/8 p-3 space-y-2" style={{ backgroundColor: '#1a1a1a' }}>
-                {editingOfferId === offer.id ? (
-                  <div className="space-y-2">
-                    <input value={offerForm.title} onChange={e => setOfferForm(f => ({ ...f, title: e.target.value }))} placeholder="العنوان" className={inputCls} />
-                    <input value={offerForm.badge} onChange={e => setOfferForm(f => ({ ...f, badge: e.target.value }))} placeholder="الشارة (مثال: VIP)" className={inputCls} />
-                    <input value={offerForm.description} onChange={e => setOfferForm(f => ({ ...f, description: e.target.value }))} placeholder="الوصف" className={inputCls} />
-                    {salonServices.length > 0 && (
-                      <div>
-                        <label className="block text-xs text-gray-500 mb-1">الخدمات المشمولة</label>
-                        <div className="rounded-xl border border-white/10 p-2 space-y-1 max-h-36 overflow-y-auto">
-                          {salonServices.map(svc => (
-                            <label key={svc.id} className="flex items-center gap-2 cursor-pointer px-1 py-0.5 rounded hover:bg-white/5">
-                              <input type="checkbox" checked={offerForm.service_ids.includes(svc.id)}
-                                onChange={e => setOfferForm(f => ({ ...f, service_ids: e.target.checked ? [...f.service_ids, svc.id] : f.service_ids.filter(id => id !== svc.id) }))}
-                                className="accent-[#D4A843]" />
-                              <span className="text-sm text-gray-300">{svc.name_ar}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    <div className="grid grid-cols-2 gap-2">
-                      <input value={offerForm.price_current} onChange={e => setOfferForm(f => ({ ...f, price_current: e.target.value }))} placeholder="السعر الحالي" className={inputCls} />
-                      <input value={offerForm.price_old} onChange={e => setOfferForm(f => ({ ...f, price_old: e.target.value }))} placeholder="السعر القديم" className={inputCls} />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Toggle value={offerForm.is_active} onChange={v => setOfferForm(f => ({ ...f, is_active: v }))} />
-                      <span className="text-xs text-gray-500">نشط</span>
-                    </div>
-                    <div className="flex justify-end gap-2 pt-1">
-                      <button onClick={() => setEditingOfferId(null)} className="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-300">إلغاء</button>
-                      <button disabled={savingOffer} onClick={async () => {
-                        const updated = offers.map(o => o.id === offer.id ? { ...o, ...offerForm } : o)
-                        await saveOffers(updated)
-                        setEditingOfferId(null)
-                      }} className="px-4 py-1.5 text-sm font-medium rounded-xl disabled:opacity-40" style={{ backgroundColor: '#D4A843', color: '#1a1a1a' }}>
-                        {savingOffer ? '...' : 'حفظ'}
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-white">{offer.title || '—'}</span>
-                        {offer.badge && <span className="text-xs px-2 py-0.5 rounded-full border border-white/10 text-gray-400">{offer.badge}</span>}
-                        <span className={`text-xs ${offer.is_active ? 'text-green-400' : 'text-gray-600'}`}>{offer.is_active ? 'نشط' : 'مخفي'}</span>
-                      </div>
-                      {offer.description && <p className="text-xs text-gray-500 mt-0.5">{offer.description}</p>}
-                      <div className="flex items-center gap-2 mt-1">
-                        {offer.price_current && <span className="text-xs font-bold" style={{ color: '#D4A843' }}>{offer.price_current} ر.س</span>}
-                        {offer.price_old && <span className="text-xs text-gray-600 line-through">{offer.price_old} ر.س</span>}
-                      </div>
-                    </div>
-                    {deletingOfferId === offer.id ? (
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <span className="text-xs text-gray-500">حذف؟</span>
-                        <button onClick={async () => { await saveOffers(offers.filter(o => o.id !== offer.id)); setDeletingOfferId(null) }} className="text-xs font-semibold text-red-400 px-1">نعم</button>
-                        <button onClick={() => setDeletingOfferId(null)} className="text-xs text-gray-500 px-1">لا</button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-0.5 shrink-0">
-                        <button onClick={() => { setOfferForm({ title: offer.title, badge: offer.badge, description: offer.description, price_current: offer.price_current, price_old: offer.price_old, is_active: offer.is_active, service_ids: offer.service_ids ?? [] }); setEditingOfferId(offer.id); setAddingOffer(false) }} className="p-1.5 text-gray-600 hover:text-gray-300 rounded-lg hover:bg-white/5 transition-colors"><IconEdit /></button>
-                        <button onClick={() => setDeletingOfferId(offer.id)} className="p-1.5 text-gray-600 hover:text-red-400 rounded-lg hover:bg-red-900/20 transition-colors"><IconTrash /></button>
-                      </div>
-                    )}
-                  </div>
+            <p className="text-xs text-gray-500">اختر لون ثيم بطاقات العروض في صفحة الصالون</p>
+            <div className="grid grid-cols-4 gap-3">
+              {([
+                { key: 'gold',   label: 'ذهبي',   color: '#D4AF37' },
+                { key: 'blue',   label: 'أزرق',   color: '#3B82F6' },
+                { key: 'purple', label: 'بنفسجي', color: '#7C3AED' },
+              ] as const).map(t => (
+                <button
+                  key={t.key}
+                  onClick={() => saveCardTheme(t.key)}
+                  disabled={savingTheme}
+                  className={`relative flex flex-col items-center gap-2 rounded-2xl border p-4 transition-all duration-200 disabled:opacity-50 ${cardTheme === t.key ? 'border-white/30 bg-white/5' : 'border-white/8 hover:border-white/20 hover:bg-white/3'}`}
+                >
+                  <span className="w-8 h-8 rounded-full shrink-0 shadow-lg" style={{ backgroundColor: t.color, boxShadow: cardTheme === t.key ? `0 0 12px ${t.color}88` : undefined }} />
+                  <span className="text-xs text-gray-400">{t.label}</span>
+                  {cardTheme === t.key && (
+                    <span className="absolute top-2 left-2 w-2 h-2 rounded-full" style={{ backgroundColor: t.color }} />
+                  )}
+                </button>
+              ))}
+              {/* Custom color */}
+              <div className={`relative flex flex-col items-center gap-2 rounded-2xl border p-4 transition-all duration-200 ${cardTheme === 'custom' ? 'border-white/30 bg-white/5' : 'border-white/8'}`}>
+                <label className="cursor-pointer flex flex-col items-center gap-2 w-full">
+                  <span className="w-8 h-8 rounded-full shrink-0 shadow-lg border border-white/20 overflow-hidden" style={{ backgroundColor: customColor }}>
+                    <input type="color" value={customColor}
+                      onChange={e => setCustomColor(e.target.value)}
+                      onBlur={() => saveCardTheme('custom', customColor)}
+                      className="opacity-0 w-full h-full cursor-pointer" />
+                  </span>
+                  <span className="text-xs text-gray-400">مخصص</span>
+                </label>
+                {cardTheme === 'custom' && (
+                  <span className="absolute top-2 left-2 w-2 h-2 rounded-full" style={{ backgroundColor: customColor }} />
                 )}
               </div>
-            ))}
-
-            {addingOffer && (
-              <div className="rounded-xl border border-white/8 p-3 space-y-2" style={{ backgroundColor: '#1a1a1a' }}>
-                <input autoFocus value={offerForm.title} onChange={e => setOfferForm(f => ({ ...f, title: e.target.value }))} placeholder="العنوان" className={inputCls} />
-                <input value={offerForm.badge} onChange={e => setOfferForm(f => ({ ...f, badge: e.target.value }))} placeholder="الشارة (مثال: VIP)" className={inputCls} />
-                <input value={offerForm.description} onChange={e => setOfferForm(f => ({ ...f, description: e.target.value }))} placeholder="الوصف" className={inputCls} />
-                {salonServices.length > 0 && (
-                  <div>
-                    <label className="block text-xs text-gray-500 mb-1">الخدمات المشمولة</label>
-                    <div className="rounded-xl border border-white/10 p-2 space-y-1 max-h-36 overflow-y-auto">
-                      {salonServices.map(svc => (
-                        <label key={svc.id} className="flex items-center gap-2 cursor-pointer px-1 py-0.5 rounded hover:bg-white/5">
-                          <input type="checkbox" checked={offerForm.service_ids.includes(svc.id)}
-                            onChange={e => setOfferForm(f => ({ ...f, service_ids: e.target.checked ? [...f.service_ids, svc.id] : f.service_ids.filter(id => id !== svc.id) }))}
-                            className="accent-[#D4A843]" />
-                          <span className="text-sm text-gray-300">{svc.name_ar}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                <div className="grid grid-cols-2 gap-2">
-                  <input value={offerForm.price_current} onChange={e => setOfferForm(f => ({ ...f, price_current: e.target.value }))} placeholder="السعر الحالي" className={inputCls} />
-                  <input value={offerForm.price_old} onChange={e => setOfferForm(f => ({ ...f, price_old: e.target.value }))} placeholder="السعر القديم" className={inputCls} />
-                </div>
-                <div className="flex items-center gap-2">
-                  <Toggle value={offerForm.is_active} onChange={v => setOfferForm(f => ({ ...f, is_active: v }))} />
-                  <span className="text-xs text-gray-500">نشط</span>
-                </div>
-                <div className="flex justify-end gap-2 pt-1">
-                  <button onClick={() => setAddingOffer(false)} className="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-300">إلغاء</button>
-                  <button disabled={savingOffer || !offerForm.title.trim()} onClick={async () => {
-                    const newOffer: Offer = { id: Date.now().toString(), ...offerForm }
-                    await saveOffers([...offers, newOffer])
-                    setOfferForm({ title: '', badge: '', description: '', price_current: '', price_old: '', is_active: true, service_ids: [] })
-                    setAddingOffer(false)
-                  }} className="px-4 py-1.5 text-sm font-medium rounded-xl disabled:opacity-40" style={{ backgroundColor: '#D4A843', color: '#1a1a1a' }}>
-                    {savingOffer ? '...' : 'إضافة'}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {!addingOffer && (
-              <button onClick={() => { setAddingOffer(true); setEditingOfferId(null); setOfferForm({ title: '', badge: '', description: '', price_current: '', price_old: '', is_active: true, service_ids: [] }) }}
-                className="w-full mt-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm transition-colors border border-dashed border-white/10 text-gray-500 hover:border-white/20 hover:text-gray-300">
-                <span className="text-base leading-none">+</span>إضافة عرض
+            </div>
+            {cardTheme === 'custom' && (
+              <button onClick={() => saveCardTheme('custom', customColor)} disabled={savingTheme}
+                className="w-full py-2 text-xs font-medium rounded-xl disabled:opacity-40 transition-colors"
+                style={{ backgroundColor: '#D4A843', color: '#1a1a1a' }}>
+                {savingTheme ? 'جارٍ الحفظ...' : 'حفظ اللون المخصص'}
               </button>
             )}
           </div>
         </Section>
+
 
       </div>
     </div>
