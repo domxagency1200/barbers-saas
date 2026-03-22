@@ -17,7 +17,7 @@ function toEmbedUrl(url: string): string {
 interface Barber { id: string; name: string }
 interface Service { id: string; name_ar: string; price: number; duration_min: number }
 interface Props {
-  salon: { id: string; name: string; whatsapp_number: string | null; city: string | null; working_hours?: string | null; meta?: { tagline?: string; neighborhood?: string; hero_image?: string; feature_image?: string; map_url?: string; map_embed_url?: string; map_place_url?: string } | null }
+  salon: { id: string; name: string; whatsapp_number: string | null; city: string | null; working_hours?: string | null; meta?: { hero_title?: string; tagline?: string; neighborhood?: string; hero_image?: string; feature_image?: string; map_url?: string; map_embed_url?: string; map_place_url?: string } | null }
   barbers: Barber[]
   services: Service[]
   slug: string
@@ -288,8 +288,14 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
                 <span className="text-white/70">+10 سنوات خبرة</span>
               </div>
               <h1 className="text-3xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl lg:text-[4.5rem]">
-                <span className="block text-white">العناية المثالية</span>
-                <span className="headline-gold block mt-1">للحلاقة الفاخرة</span>
+                {salon.meta?.hero_title ? (
+                  <span className="block text-white">{salon.meta.hero_title}</span>
+                ) : (
+                  <>
+                    <span className="block text-white">العناية المثالية</span>
+                    <span className="headline-gold block mt-1">للحلاقة الفاخرة</span>
+                  </>
+                )}
               </h1>
               <p className="mt-4 max-w-lg text-base leading-relaxed text-white/60 sm:text-lg lg:text-xl">{tagline}</p>
               <div className="mt-7 flex flex-wrap items-center gap-3 lg:mt-10 lg:gap-4">

@@ -22,7 +22,7 @@ interface Salon {
   id: string
   name: string
   whatsapp_number: string | null
-  meta?: { tagline?: string; neighborhood?: string; hero_image?: string; feature_image?: string; map_place_url?: string; map_embed_url?: string } | null
+  meta?: { hero_title?: string; tagline?: string; neighborhood?: string; hero_image?: string; feature_image?: string; map_place_url?: string; map_embed_url?: string } | null
 }
 
 interface WorkingHours {
@@ -118,7 +118,7 @@ export default function SettingsPage() {
   const [newBarberName, setNewBarberName] = useState('')
   const [savingNewBarber, setSavingNewBarber] = useState(false)
 
-  const [metaForm, setMetaForm] = useState({ tagline: '', neighborhood: '', hero_image: '', feature_image: '', map_place_url: '', map_embed_url: '' })
+  const [metaForm, setMetaForm] = useState({ hero_title: '', tagline: '', neighborhood: '', hero_image: '', feature_image: '', map_place_url: '', map_embed_url: '' })
   const [metaEditing, setMetaEditing] = useState(false)
   const [savingMeta, setSavingMeta] = useState(false)
   const [uploadingImage, setUploadingImage] = useState(false)
@@ -166,7 +166,7 @@ export default function SettingsPage() {
     // Load meta separately — column may not exist yet
     const { data: metaRow } = await supabase.from('salons').select('meta').eq('id', sid).single()
     const m = (metaRow as any)?.meta ?? {}
-    setMetaForm({ tagline: m.tagline ?? '', neighborhood: m.neighborhood ?? '', hero_image: m.hero_image ?? '', feature_image: m.feature_image ?? '', map_place_url: m.map_place_url ?? '', map_embed_url: m.map_embed_url ?? '' })
+    setMetaForm({ hero_title: m.hero_title ?? '', tagline: m.tagline ?? '', neighborhood: m.neighborhood ?? '', hero_image: m.hero_image ?? '', feature_image: m.feature_image ?? '', map_place_url: m.map_place_url ?? '', map_embed_url: m.map_embed_url ?? '' })
   }
 
   function startEditSalon() {
@@ -260,6 +260,7 @@ export default function SettingsPage() {
     const existingMeta = (current as any)?.meta ?? {}
     const metaPayload = {
       ...existingMeta,
+      hero_title: metaForm.hero_title.trim(),
       tagline: metaForm.tagline.trim(),
       neighborhood: metaForm.neighborhood.trim(),
       hero_image: metaForm.hero_image.trim(),
@@ -440,6 +441,11 @@ export default function SettingsPage() {
           {metaEditing ? (
             <div className="space-y-3">
               <div>
+                <label className="block text-xs text-gray-500 mb-1">عنوان الهيرو (hero_title)</label>
+                <input value={metaForm.hero_title} onChange={e => setMetaForm(f => ({ ...f, hero_title: e.target.value }))}
+                  placeholder="مثال: العناية المثالية للحلاقة الفاخرة" className={inputCls} />
+              </div>
+              <div>
                 <label className="block text-xs text-gray-500 mb-1">وصف قصير</label>
                 <input value={metaForm.tagline} onChange={e => setMetaForm(f => ({ ...f, tagline: e.target.value }))}
                   placeholder="مثال: أفضل صالون في الحي" className={inputCls} />
@@ -501,6 +507,10 @@ export default function SettingsPage() {
           ) : (
             <div className="flex items-start justify-between gap-3">
               <div className="space-y-1.5">
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-gray-500 w-24 shrink-0">عنوان الهيرو</span>
+                  <span className="text-sm text-white">{salon?.meta?.hero_title || '—'}</span>
+                </div>
                 <div className="flex items-center gap-3">
                   <span className="text-xs text-gray-500 w-24 shrink-0">وصف قصير</span>
                   <span className="text-sm text-white">{salon?.meta?.tagline || '—'}</span>
