@@ -299,10 +299,10 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
                   <svg className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5m0 0l7-7m-7 7l7 7"/></svg>
                 </a>
               </div>
-              <div className="mt-12 grid gap-3 sm:grid-cols-3">
-                <div className="rounded-2xl border border-white/8 p-4" style={{ background: 'rgba(255,255,255,.04)', backdropFilter: 'blur(10px)' }}><div className="text-xs text-white/45 mb-1">الحجز</div><div className="text-sm font-bold">بالحجز المسبق فقط</div></div>
-                <div className="rounded-2xl border border-white/8 p-4" style={{ background: 'rgba(255,255,255,.04)', backdropFilter: 'blur(10px)' }}><div className="text-xs text-white/45 mb-1">الموقع</div><div className="text-sm font-bold">{neighborhood}</div></div>
-                <div className="rounded-2xl border border-white/8 p-4" style={{ background: 'rgba(255,255,255,.04)', backdropFilter: 'blur(10px)' }}><div className="text-xs text-white/45 mb-1">ساعات العمل</div><div className="text-sm font-bold">{workingHours}</div></div>
+              <div className="mt-8 flex items-center rounded-2xl border border-white/8 divide-x divide-x-reverse divide-white/8 overflow-hidden" style={{ background: 'rgba(255,255,255,.04)', backdropFilter: 'blur(10px)' }}>
+                <div className="flex-1 px-4 py-3"><div className="text-xs text-white/45 mb-0.5">الحجز</div><div className="text-sm font-bold">بالحجز المسبق فقط</div></div>
+                <div className="flex-1 px-4 py-3"><div className="text-xs text-white/45 mb-0.5">الموقع</div><div className="text-sm font-bold truncate">{neighborhood}</div></div>
+                <div className="flex-1 px-4 py-3"><div className="text-xs text-white/45 mb-0.5">ساعات العمل</div><div className="text-sm font-bold">{workingHours}</div></div>
               </div>
             </div>
 
