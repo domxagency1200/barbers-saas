@@ -17,7 +17,7 @@ function toEmbedUrl(url: string): string {
 interface Barber { id: string; name: string }
 interface Service { id: string; name_ar: string; price: number; duration_min: number }
 interface Props {
-  salon: { id: string; name: string; whatsapp_number: string | null; city: string | null; working_hours?: string | null; meta?: { hero_title?: string; tagline?: string; neighborhood?: string; hero_image?: string; feature_image?: string; map_url?: string; map_embed_url?: string; map_place_url?: string } | null }
+  salon: { id: string; name: string; whatsapp_number: string | null; city: string | null; working_hours?: string | null; meta?: { hero_title?: string; tagline?: string; neighborhood?: string; hero_image?: string; feature_image?: string; map_url?: string; map_embed_url?: string; map_place_url?: string; offers?: { id: string; title: string; badge?: string; description?: string; price_current?: string; price_old?: string; is_active: boolean; service_ids?: string[] }[] } | null }
   barbers: Barber[]
   services: Service[]
   slug: string
@@ -355,6 +355,49 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
             </div>
           </div>
         </section>
+
+        {/* ── OFFERS ── */}
+        {(salon.meta?.offers?.filter(o => o.is_active) ?? []).length > 0 && (
+        <section id="offers" className="scroll-mt-24 border-y border-white/5 bg-[#FAF7F0] sec-light">
+          <div className="mx-auto max-w-6xl px-4 py-20 lg:px-6">
+            <div className="reveal mb-12">
+              <div className="sec-label">العروض الحصرية</div>
+              <h2 className="text-3xl font-extrabold tracking-tight lg:text-4xl">عروضنا</h2>
+            </div>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {salon.meta!.offers!.filter(o => o.is_active).map((offer, i) => {
+                const offerServices = (offer.service_ids ?? []).map(sid => services.find(s => s.id === sid)?.name_ar).filter(Boolean)
+                return (
+                  <article key={offer.id} className={`glass-card reveal reveal-d${i + 1} rounded-3xl p-7 flex flex-col`}>
+                    {offer.badge && (
+                      <span className="mb-4 self-start inline-flex rounded-full border border-gold/25 px-3 py-1 text-xs font-bold text-gold bg-gold/8">{offer.badge}</span>
+                    )}
+                    <h3 className="text-xl font-extrabold mb-2">{offer.title}</h3>
+                    {offer.description && <p className="text-sm text-white/55 leading-relaxed mb-4">{offer.description}</p>}
+                    {offerServices.length > 0 && (
+                      <ul className="mb-5 space-y-1.5">
+                        {offerServices.map(name => (
+                          <li key={name} className="flex items-center gap-2 text-sm text-white/70">
+                            <svg className="h-4 w-4 shrink-0 text-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
+                            {name}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    <div className="mt-auto">
+                      <div className="flex items-baseline gap-3 mb-5">
+                        {offer.price_current && <span className="text-3xl font-extrabold text-gold">{offer.price_current} ر.س</span>}
+                        {offer.price_old && <span className="text-base text-white/35 line-through">{offer.price_old} ر.س</span>}
+                      </div>
+                      <button type="button" onClick={() => openBooking(offer.title)} className="btn-gold w-full rounded-xl px-5 py-3 text-sm font-extrabold text-black">احجز الآن</button>
+                    </div>
+                  </article>
+                )
+              })}
+            </div>
+          </div>
+        </section>
+        )}
 
         {/* ── WHY US ── */}
         <section id="why-us" className="scroll-mt-24 bg-ink">
