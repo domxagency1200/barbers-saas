@@ -128,6 +128,8 @@ export default function SettingsPage() {
   const [customColor, setCustomColor] = useState<string>('#FFAA00')
   const [savingTheme, setSavingTheme] = useState(false)
 
+  const [salonSlug, setSalonSlug] = useState<string | null>(null)
+
   const [salonId, setSalonId] = useState<string | null>(null)
 
   useEffect(() => {
@@ -162,10 +164,11 @@ export default function SettingsPage() {
 
   async function loadSalon(sid: string | null) {
     if (!sid) return
-    const { data, error: e } = await supabase.from('salons').select('id, name, whatsapp_number').eq('id', sid).single()
+    const { data, error: e } = await supabase.from('salons').select('id, name, whatsapp_number, slug').eq('id', sid).single()
     if (e || !data) { setError('تعذّر تحميل بيانات الصالون'); return }
     setSalon(data)
     setSalonForm({ name: data.name ?? '', whatsapp_number: data.whatsapp_number ?? '' })
+    setSalonSlug((data as any).slug ?? null)
 
     // Load meta separately — column may not exist yet
     const { data: metaRow } = await supabase.from('salons').select('meta').eq('id', sid).single()
@@ -675,6 +678,16 @@ export default function SettingsPage() {
           </div>
         </Section>
 
+        {salonSlug && (
+          <a href={`/${salonSlug}`} target="_blank" rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl border border-white/10 text-sm font-medium text-white/70 hover:text-white hover:border-white/20 transition-colors"
+            style={{ backgroundColor: '#242424' }}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+            </svg>
+            زيارة موقعي
+          </a>
+        )}
 
       </div>
     </div>
