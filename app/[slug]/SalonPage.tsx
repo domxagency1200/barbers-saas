@@ -356,44 +356,6 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
           </div>
         </section>
 
-        {/* ── SERVICES LIST ── */}
-        <section id="services" className="scroll-mt-24 border-y border-white/5 bg-[#FAF7F0] sec-light">
-          <div className="mx-auto max-w-6xl px-4 py-20 lg:px-6">
-            <div className="reveal">
-              <div className="sec-label">قائمتنا الكاملة</div>
-              <h2 className="text-3xl font-extrabold tracking-tight lg:text-4xl">قائمة الخدمات والأسعار</h2>
-              <p className="mt-2 text-white/50 leading-relaxed">اختر الخدمة المناسبة—وسعرها متوفر عند الحجز أو في الصالون.</p>
-            </div>
-            {services.length === 0 ? (
-              <p className="mt-12 text-center text-white/40 text-sm">لا توجد خدمات حالياً</p>
-            ) : (
-              <div className="mt-12 overflow-hidden rounded-3xl border border-white/8 shadow-soft reveal" style={{ background: 'rgba(255,255,255,.7)' }}>
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[520px] text-right text-sm">
-                    <thead style={{ background: 'rgba(201,168,76,.06)' }}>
-                      <tr className="text-white/65">
-                        <th className="px-6 py-5 font-extrabold text-base">الخدمة</th>
-                        <th className="px-6 py-5 font-extrabold text-base">السعر</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5">
-                      {services.map(svc => (
-                        <tr key={svc.id} className="transition-colors duration-150 hover:bg-white/3">
-                          <td className="px-6 py-4 font-bold">{svc.name_ar}</td>
-                          <td className="px-6 py-4 font-extrabold text-gold">{svc.price} ر.س</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-            <div className="mt-8 flex justify-center reveal">
-              <button type="button" onClick={() => openBooking()} className="btn-gold w-full max-w-xs rounded-xl px-6 py-3 text-center text-sm font-extrabold text-black focus:outline-none focus:ring-2 focus:ring-gold/60 focus:ring-offset-2 focus:ring-offset-black">احجز الآن</button>
-            </div>
-          </div>
-        </section>
-
         {/* ── WHY US ── */}
         <section id="why-us" className="scroll-mt-24 bg-ink">
           <div className="mx-auto max-w-6xl px-4 py-20 lg:px-6">
