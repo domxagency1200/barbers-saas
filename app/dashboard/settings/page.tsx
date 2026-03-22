@@ -37,6 +37,11 @@ interface Barber {
   is_available: boolean
 }
 
+interface Service {
+  id: string
+  name_ar: string
+}
+
 interface Offer {
   id: string
   title: string
@@ -45,6 +50,7 @@ interface Offer {
   price_current: string
   price_old: string
   is_active: boolean
+  service_ids: string[]
 }
 
 // ── Icons ────────────────────────────────────────────────────
@@ -134,8 +140,9 @@ export default function SettingsPage() {
   const [uploadingImage, setUploadingImage] = useState(false)
   const [uploadingFeatureImage, setUploadingFeatureImage] = useState(false)
 
+  const [salonServices, setSalonServices] = useState<Service[]>([])
   const [offers, setOffers] = useState<Offer[]>([])
-  const [offerForm, setOfferForm] = useState({ title: '', badge: '', description: '', price_current: '', price_old: '', is_active: true })
+  const [offerForm, setOfferForm] = useState({ title: '', badge: '', description: '', price_current: '', price_old: '', is_active: true, service_ids: [] as string[] })
   const [addingOffer, setAddingOffer] = useState(false)
   const [editingOfferId, setEditingOfferId] = useState<string | null>(null)
   const [savingOffer, setSavingOffer] = useState(false)
@@ -162,6 +169,8 @@ export default function SettingsPage() {
 
         const sid = member.salon_id
         setSalonId(sid)
+        const { data: svcs } = await supabase.from('services').select('id, name_ar').eq('salon_id', sid).eq('is_active', true).order('name_ar')
+        setSalonServices(svcs ?? [])
         await Promise.all([loadSalon(sid), loadHours(sid), loadBarbers(sid)])
       } catch {
         setError('حدث خطأ أثناء تحميل البيانات')
@@ -648,6 +657,21 @@ export default function SettingsPage() {
                     <input value={offerForm.title} onChange={e => setOfferForm(f => ({ ...f, title: e.target.value }))} placeholder="العنوان" className={inputCls} />
                     <input value={offerForm.badge} onChange={e => setOfferForm(f => ({ ...f, badge: e.target.value }))} placeholder="الشارة (مثال: VIP)" className={inputCls} />
                     <input value={offerForm.description} onChange={e => setOfferForm(f => ({ ...f, description: e.target.value }))} placeholder="الوصف" className={inputCls} />
+                    {salonServices.length > 0 && (
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">الخدمات المشمولة</label>
+                        <div className="rounded-xl border border-white/10 p-2 space-y-1 max-h-36 overflow-y-auto">
+                          {salonServices.map(svc => (
+                            <label key={svc.id} className="flex items-center gap-2 cursor-pointer px-1 py-0.5 rounded hover:bg-white/5">
+                              <input type="checkbox" checked={offerForm.service_ids.includes(svc.id)}
+                                onChange={e => setOfferForm(f => ({ ...f, service_ids: e.target.checked ? [...f.service_ids, svc.id] : f.service_ids.filter(id => id !== svc.id) }))}
+                                className="accent-[#D4A843]" />
+                              <span className="text-sm text-gray-300">{svc.name_ar}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     <div className="grid grid-cols-2 gap-2">
                       <input value={offerForm.price_current} onChange={e => setOfferForm(f => ({ ...f, price_current: e.target.value }))} placeholder="السعر الحالي" className={inputCls} />
                       <input value={offerForm.price_old} onChange={e => setOfferForm(f => ({ ...f, price_old: e.target.value }))} placeholder="السعر القديم" className={inputCls} />
@@ -689,7 +713,7 @@ export default function SettingsPage() {
                       </div>
                     ) : (
                       <div className="flex items-center gap-0.5 shrink-0">
-                        <button onClick={() => { setOfferForm({ title: offer.title, badge: offer.badge, description: offer.description, price_current: offer.price_current, price_old: offer.price_old, is_active: offer.is_active }); setEditingOfferId(offer.id); setAddingOffer(false) }} className="p-1.5 text-gray-600 hover:text-gray-300 rounded-lg hover:bg-white/5 transition-colors"><IconEdit /></button>
+                        <button onClick={() => { setOfferForm({ title: offer.title, badge: offer.badge, description: offer.description, price_current: offer.price_current, price_old: offer.price_old, is_active: offer.is_active, service_ids: offer.service_ids ?? [] }); setEditingOfferId(offer.id); setAddingOffer(false) }} className="p-1.5 text-gray-600 hover:text-gray-300 rounded-lg hover:bg-white/5 transition-colors"><IconEdit /></button>
                         <button onClick={() => setDeletingOfferId(offer.id)} className="p-1.5 text-gray-600 hover:text-red-400 rounded-lg hover:bg-red-900/20 transition-colors"><IconTrash /></button>
                       </div>
                     )}
@@ -703,6 +727,21 @@ export default function SettingsPage() {
                 <input autoFocus value={offerForm.title} onChange={e => setOfferForm(f => ({ ...f, title: e.target.value }))} placeholder="العنوان" className={inputCls} />
                 <input value={offerForm.badge} onChange={e => setOfferForm(f => ({ ...f, badge: e.target.value }))} placeholder="الشارة (مثال: VIP)" className={inputCls} />
                 <input value={offerForm.description} onChange={e => setOfferForm(f => ({ ...f, description: e.target.value }))} placeholder="الوصف" className={inputCls} />
+                {salonServices.length > 0 && (
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">الخدمات المشمولة</label>
+                    <div className="rounded-xl border border-white/10 p-2 space-y-1 max-h-36 overflow-y-auto">
+                      {salonServices.map(svc => (
+                        <label key={svc.id} className="flex items-center gap-2 cursor-pointer px-1 py-0.5 rounded hover:bg-white/5">
+                          <input type="checkbox" checked={offerForm.service_ids.includes(svc.id)}
+                            onChange={e => setOfferForm(f => ({ ...f, service_ids: e.target.checked ? [...f.service_ids, svc.id] : f.service_ids.filter(id => id !== svc.id) }))}
+                            className="accent-[#D4A843]" />
+                          <span className="text-sm text-gray-300">{svc.name_ar}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-2">
                   <input value={offerForm.price_current} onChange={e => setOfferForm(f => ({ ...f, price_current: e.target.value }))} placeholder="السعر الحالي" className={inputCls} />
                   <input value={offerForm.price_old} onChange={e => setOfferForm(f => ({ ...f, price_old: e.target.value }))} placeholder="السعر القديم" className={inputCls} />
@@ -716,7 +755,7 @@ export default function SettingsPage() {
                   <button disabled={savingOffer || !offerForm.title.trim()} onClick={async () => {
                     const newOffer: Offer = { id: Date.now().toString(), ...offerForm }
                     await saveOffers([...offers, newOffer])
-                    setOfferForm({ title: '', badge: '', description: '', price_current: '', price_old: '', is_active: true })
+                    setOfferForm({ title: '', badge: '', description: '', price_current: '', price_old: '', is_active: true, service_ids: [] })
                     setAddingOffer(false)
                   }} className="px-4 py-1.5 text-sm font-medium rounded-xl disabled:opacity-40" style={{ backgroundColor: '#D4A843', color: '#1a1a1a' }}>
                     {savingOffer ? '...' : 'إضافة'}
@@ -726,7 +765,7 @@ export default function SettingsPage() {
             )}
 
             {!addingOffer && (
-              <button onClick={() => { setAddingOffer(true); setEditingOfferId(null); setOfferForm({ title: '', badge: '', description: '', price_current: '', price_old: '', is_active: true }) }}
+              <button onClick={() => { setAddingOffer(true); setEditingOfferId(null); setOfferForm({ title: '', badge: '', description: '', price_current: '', price_old: '', is_active: true, service_ids: [] }) }}
                 className="w-full mt-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm transition-colors border border-dashed border-white/10 text-gray-500 hover:border-white/20 hover:text-gray-300">
                 <span className="text-base leading-none">+</span>إضافة عرض
               </button>
