@@ -22,7 +22,7 @@ interface Salon {
   id: string
   name: string
   whatsapp_number: string | null
-  meta?: { hero_title?: string; tagline?: string; neighborhood?: string; hero_image?: string; feature_image?: string; map_place_url?: string; map_embed_url?: string } | null
+  meta?: { hero_title?: string; tagline?: string; neighborhood?: string; hero_image?: string; feature_image?: string; map_place_url?: string; map_embed_url?: string; offers?: Offer[] } | null
 }
 
 interface WorkingHours {
@@ -35,6 +35,16 @@ interface Barber {
   id: string
   name: string
   is_available: boolean
+}
+
+interface Offer {
+  id: string
+  title: string
+  badge: string
+  description: string
+  price_current: string
+  price_old: string
+  is_active: boolean
 }
 
 // ── Icons ────────────────────────────────────────────────────
@@ -124,6 +134,13 @@ export default function SettingsPage() {
   const [uploadingImage, setUploadingImage] = useState(false)
   const [uploadingFeatureImage, setUploadingFeatureImage] = useState(false)
 
+  const [offers, setOffers] = useState<Offer[]>([])
+  const [offerForm, setOfferForm] = useState({ title: '', badge: '', description: '', price_current: '', price_old: '', is_active: true })
+  const [addingOffer, setAddingOffer] = useState(false)
+  const [editingOfferId, setEditingOfferId] = useState<string | null>(null)
+  const [savingOffer, setSavingOffer] = useState(false)
+  const [deletingOfferId, setDeletingOfferId] = useState<string | null>(null)
+
   const [salonId, setSalonId] = useState<string | null>(null)
 
   useEffect(() => {
@@ -167,6 +184,7 @@ export default function SettingsPage() {
     const { data: metaRow } = await supabase.from('salons').select('meta').eq('id', sid).single()
     const m = (metaRow as any)?.meta ?? {}
     setMetaForm({ hero_title: m.hero_title ?? '', tagline: m.tagline ?? '', neighborhood: m.neighborhood ?? '', hero_image: m.hero_image ?? '', feature_image: m.feature_image ?? '', map_place_url: m.map_place_url ?? '', map_embed_url: m.map_embed_url ?? '' })
+    setOffers(m.offers ?? [])
   }
 
   function startEditSalon() {
@@ -223,6 +241,18 @@ export default function SettingsPage() {
       setHoursEditing(false)
     }
     setSavingHours(false)
+  }
+
+  async function saveOffers(updatedOffers: Offer[]) {
+    const id = salonId ?? salon?.id ?? null
+    if (!id) return
+    setSavingOffer(true)
+    setError(null)
+    const { data: current } = await supabase.from('salons').select('meta').eq('id', id).single()
+    const existingMeta = (current as any)?.meta ?? {}
+    const { error: e } = await supabase.from('salons').update({ meta: { ...existingMeta, offers: updatedOffers } }).eq('id', id)
+    if (e) { setError('تعذّر حفظ العروض: ' + e.message) } else { setOffers(updatedOffers) }
+    setSavingOffer(false)
   }
 
   async function uploadHeroImage(file: File) {
@@ -603,6 +633,102 @@ export default function SettingsPage() {
               <button onClick={() => { setAddingBarber(true); setNewBarberName(''); setEditingBarberId(null) }}
                 className="w-full mt-2 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm transition-colors border border-dashed border-white/10 text-gray-500 hover:border-white/20 hover:text-gray-300">
                 <span className="text-base leading-none">+</span>إضافة حلاق
+              </button>
+            )}
+          </div>
+        </Section>
+
+        {/* Offers */}
+        <Section title="العروض">
+          <div className="space-y-3">
+            {offers.map(offer => (
+              <div key={offer.id} className="rounded-xl border border-white/8 p-3 space-y-2" style={{ backgroundColor: '#1a1a1a' }}>
+                {editingOfferId === offer.id ? (
+                  <div className="space-y-2">
+                    <input value={offerForm.title} onChange={e => setOfferForm(f => ({ ...f, title: e.target.value }))} placeholder="العنوان" className={inputCls} />
+                    <input value={offerForm.badge} onChange={e => setOfferForm(f => ({ ...f, badge: e.target.value }))} placeholder="الشارة (مثال: VIP)" className={inputCls} />
+                    <input value={offerForm.description} onChange={e => setOfferForm(f => ({ ...f, description: e.target.value }))} placeholder="الوصف" className={inputCls} />
+                    <div className="grid grid-cols-2 gap-2">
+                      <input value={offerForm.price_current} onChange={e => setOfferForm(f => ({ ...f, price_current: e.target.value }))} placeholder="السعر الحالي" className={inputCls} />
+                      <input value={offerForm.price_old} onChange={e => setOfferForm(f => ({ ...f, price_old: e.target.value }))} placeholder="السعر القديم" className={inputCls} />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Toggle value={offerForm.is_active} onChange={v => setOfferForm(f => ({ ...f, is_active: v }))} />
+                      <span className="text-xs text-gray-500">نشط</span>
+                    </div>
+                    <div className="flex justify-end gap-2 pt-1">
+                      <button onClick={() => setEditingOfferId(null)} className="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-300">إلغاء</button>
+                      <button disabled={savingOffer} onClick={async () => {
+                        const updated = offers.map(o => o.id === offer.id ? { ...o, ...offerForm } : o)
+                        await saveOffers(updated)
+                        setEditingOfferId(null)
+                      }} className="px-4 py-1.5 text-sm font-medium rounded-xl disabled:opacity-40" style={{ backgroundColor: '#D4A843', color: '#1a1a1a' }}>
+                        {savingOffer ? '...' : 'حفظ'}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-white">{offer.title || '—'}</span>
+                        {offer.badge && <span className="text-xs px-2 py-0.5 rounded-full border border-white/10 text-gray-400">{offer.badge}</span>}
+                        <span className={`text-xs ${offer.is_active ? 'text-green-400' : 'text-gray-600'}`}>{offer.is_active ? 'نشط' : 'مخفي'}</span>
+                      </div>
+                      {offer.description && <p className="text-xs text-gray-500 mt-0.5">{offer.description}</p>}
+                      <div className="flex items-center gap-2 mt-1">
+                        {offer.price_current && <span className="text-xs font-bold" style={{ color: '#D4A843' }}>{offer.price_current} ر.س</span>}
+                        {offer.price_old && <span className="text-xs text-gray-600 line-through">{offer.price_old} ر.س</span>}
+                      </div>
+                    </div>
+                    {deletingOfferId === offer.id ? (
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span className="text-xs text-gray-500">حذف؟</span>
+                        <button onClick={async () => { await saveOffers(offers.filter(o => o.id !== offer.id)); setDeletingOfferId(null) }} className="text-xs font-semibold text-red-400 px-1">نعم</button>
+                        <button onClick={() => setDeletingOfferId(null)} className="text-xs text-gray-500 px-1">لا</button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-0.5 shrink-0">
+                        <button onClick={() => { setOfferForm({ title: offer.title, badge: offer.badge, description: offer.description, price_current: offer.price_current, price_old: offer.price_old, is_active: offer.is_active }); setEditingOfferId(offer.id); setAddingOffer(false) }} className="p-1.5 text-gray-600 hover:text-gray-300 rounded-lg hover:bg-white/5 transition-colors"><IconEdit /></button>
+                        <button onClick={() => setDeletingOfferId(offer.id)} className="p-1.5 text-gray-600 hover:text-red-400 rounded-lg hover:bg-red-900/20 transition-colors"><IconTrash /></button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {addingOffer && (
+              <div className="rounded-xl border border-white/8 p-3 space-y-2" style={{ backgroundColor: '#1a1a1a' }}>
+                <input autoFocus value={offerForm.title} onChange={e => setOfferForm(f => ({ ...f, title: e.target.value }))} placeholder="العنوان" className={inputCls} />
+                <input value={offerForm.badge} onChange={e => setOfferForm(f => ({ ...f, badge: e.target.value }))} placeholder="الشارة (مثال: VIP)" className={inputCls} />
+                <input value={offerForm.description} onChange={e => setOfferForm(f => ({ ...f, description: e.target.value }))} placeholder="الوصف" className={inputCls} />
+                <div className="grid grid-cols-2 gap-2">
+                  <input value={offerForm.price_current} onChange={e => setOfferForm(f => ({ ...f, price_current: e.target.value }))} placeholder="السعر الحالي" className={inputCls} />
+                  <input value={offerForm.price_old} onChange={e => setOfferForm(f => ({ ...f, price_old: e.target.value }))} placeholder="السعر القديم" className={inputCls} />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Toggle value={offerForm.is_active} onChange={v => setOfferForm(f => ({ ...f, is_active: v }))} />
+                  <span className="text-xs text-gray-500">نشط</span>
+                </div>
+                <div className="flex justify-end gap-2 pt-1">
+                  <button onClick={() => setAddingOffer(false)} className="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-300">إلغاء</button>
+                  <button disabled={savingOffer || !offerForm.title.trim()} onClick={async () => {
+                    const newOffer: Offer = { id: Date.now().toString(), ...offerForm }
+                    await saveOffers([...offers, newOffer])
+                    setOfferForm({ title: '', badge: '', description: '', price_current: '', price_old: '', is_active: true })
+                    setAddingOffer(false)
+                  }} className="px-4 py-1.5 text-sm font-medium rounded-xl disabled:opacity-40" style={{ backgroundColor: '#D4A843', color: '#1a1a1a' }}>
+                    {savingOffer ? '...' : 'إضافة'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {!addingOffer && (
+              <button onClick={() => { setAddingOffer(true); setEditingOfferId(null); setOfferForm({ title: '', badge: '', description: '', price_current: '', price_old: '', is_active: true }) }}
+                className="w-full mt-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm transition-colors border border-dashed border-white/10 text-gray-500 hover:border-white/20 hover:text-gray-300">
+                <span className="text-base leading-none">+</span>إضافة عرض
               </button>
             )}
           </div>
