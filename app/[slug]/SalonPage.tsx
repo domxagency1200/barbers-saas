@@ -273,7 +273,9 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
         {/* ── HERO ── */}
         <section id="home" className="relative isolate min-h-screen scroll-mt-24 overflow-hidden flex items-center" aria-label="القسم الرئيسي">
           <div className="absolute inset-0 -z-10 overflow-hidden">
-            <div ref={heroBgRef} id="heroBg" className="absolute inset-[-10%]" style={{ backgroundImage: `url('${heroImage}')`, backgroundSize: 'cover', backgroundPosition: 'center top' }} />
+            <div ref={heroBgRef} id="heroBg" className="absolute inset-[-10%]">
+              <img src={heroImage} alt="" aria-hidden="true" className="w-full h-full object-cover object-top" />
+            </div>
             <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom,rgba(0,0,0,.18) 0%,rgba(15,15,15,.72) 55%,rgba(15,15,15,.98) 100%),radial-gradient(ellipse 90% 60% at 65% 5%,rgba(201,168,76,.13) 0%,transparent 65%),radial-gradient(ellipse 55% 75% at 5% 45%,rgba(255,255,255,.03) 0%,transparent 55%)' }} />
           </div>
 
