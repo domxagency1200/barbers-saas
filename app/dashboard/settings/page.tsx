@@ -460,7 +460,6 @@ export default function SettingsPage() {
                   <span className="text-sm text-gray-400 truncate max-w-[200px]" dir="ltr">{salon?.meta?.hero_image || '—'}</span>
                 </div>
                 <div className="flex items-center gap-3">
-                <div className="flex items-center gap-3">
                   <span className="text-xs text-gray-500 w-24 shrink-0">map_place_url</span>
                   <span className="text-sm text-gray-400 truncate max-w-[200px]" dir="ltr">{salon?.meta?.map_place_url || '—'}</span>
                 </div>
