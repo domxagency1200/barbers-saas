@@ -17,7 +17,7 @@ function toEmbedUrl(url: string): string {
 interface Barber { id: string; name: string }
 interface Service { id: string; name_ar: string; price: number; duration_min: number }
 interface Props {
-  salon: { id: string; name: string; whatsapp_number: string | null; city: string | null; working_hours?: string | null; meta?: { tagline?: string; neighborhood?: string; hero_image?: string; map_url?: string } | null }
+  salon: { id: string; name: string; whatsapp_number: string | null; city: string | null; working_hours?: string | null; meta?: { tagline?: string; neighborhood?: string; hero_image?: string; map_url?: string; map_embed_url?: string } | null }
   barbers: Barber[]
   services: Service[]
   slug: string
@@ -553,16 +553,18 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
               </div>
             </div>
             <div className="mt-4 reveal">
-              <a href={mapHref} target="_blank" rel="noopener noreferrer"
+              <a href={salon.meta?.map_place_url} target="_blank" rel="noopener noreferrer"
                 className="btn-gold inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-black">
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
                 افتح في خرائط Google
               </a>
             </div>
+            {salon.meta?.map_embed_url && (
             <div className="mt-12 overflow-hidden rounded-3xl border border-white/8 shadow-soft reveal">
               <iframe title={`موقع ${salon.name}`} className="h-[420px] w-full" loading="lazy" referrerPolicy="no-referrer-when-downgrade"
-                src={toEmbedUrl(mapUrl!)} />
+                src={salon.meta.map_embed_url} />
             </div>
+            )}
           </div>
         </section>
         )}

@@ -22,7 +22,7 @@ interface Salon {
   id: string
   name: string
   whatsapp_number: string | null
-  meta?: { tagline?: string; neighborhood?: string; hero_image?: string; map_url?: string } | null
+  meta?: { tagline?: string; neighborhood?: string; hero_image?: string; map_url?: string; map_place_url?: string; map_embed_url?: string } | null
 }
 
 interface WorkingHours {
@@ -118,7 +118,7 @@ export default function SettingsPage() {
   const [newBarberName, setNewBarberName] = useState('')
   const [savingNewBarber, setSavingNewBarber] = useState(false)
 
-  const [metaForm, setMetaForm] = useState({ tagline: '', neighborhood: '', hero_image: '', map_url: '' })
+  const [metaForm, setMetaForm] = useState({ tagline: '', neighborhood: '', hero_image: '', map_url: '', map_place_url: '', map_embed_url: '' })
   const [metaEditing, setMetaEditing] = useState(false)
   const [savingMeta, setSavingMeta] = useState(false)
 
@@ -164,7 +164,7 @@ export default function SettingsPage() {
     // Load meta separately — column may not exist yet
     const { data: metaRow } = await supabase.from('salons').select('meta').eq('id', sid).single()
     const m = (metaRow as any)?.meta ?? {}
-    setMetaForm({ tagline: m.tagline ?? '', neighborhood: m.neighborhood ?? '', hero_image: m.hero_image ?? '', map_url: m.map_url ?? '' })
+    setMetaForm({ tagline: m.tagline ?? '', neighborhood: m.neighborhood ?? '', hero_image: m.hero_image ?? '', map_url: m.map_url ?? '', map_place_url: m.map_place_url ?? '', map_embed_url: m.map_embed_url ?? '' })
   }
 
   function startEditSalon() {
@@ -228,11 +228,16 @@ export default function SettingsPage() {
     if (!id) { setError('لم يتم تحديد الصالون'); return }
     setSavingMeta(true)
     setError(null)
+    const { data: current } = await supabase.from('salons').select('meta').eq('id', id).single()
+    const existingMeta = (current as any)?.meta ?? {}
     const metaPayload = {
+      ...existingMeta,
       tagline: metaForm.tagline.trim(),
       neighborhood: metaForm.neighborhood.trim(),
       hero_image: metaForm.hero_image.trim(),
       map_url: metaForm.map_url.trim(),
+      map_place_url: metaForm.map_place_url.trim(),
+      map_embed_url: extractMapSrc(metaForm.map_embed_url.trim()),
     }
     const { error: e } = await supabase.from('salons').update({ meta: metaPayload }).eq('id', id)
     if (e) {
@@ -426,6 +431,16 @@ export default function SettingsPage() {
                 <input value={metaForm.map_url} onChange={e => setMetaForm(f => ({ ...f, map_url: e.target.value }))}
                   placeholder="https://maps.google.com/..." className={inputCls} dir="ltr" />
               </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">رابط Google Maps (map_place_url)</label>
+                <input value={metaForm.map_place_url} onChange={e => setMetaForm(f => ({ ...f, map_place_url: e.target.value }))}
+                  placeholder="https://maps.google.com/..." className={inputCls} dir="ltr" />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">رابط تضمين الخريطة (map_embed_url)</label>
+                <input value={metaForm.map_embed_url} onChange={e => setMetaForm(f => ({ ...f, map_embed_url: e.target.value }))}
+                  placeholder="https://www.google.com/maps/embed?... أو كود iframe" className={inputCls} dir="ltr" />
+              </div>
               <div className="flex items-center justify-end gap-2 pt-1">
                 <button onClick={() => setMetaEditing(false)} className="px-4 py-2 text-sm text-gray-500 hover:text-gray-300">إلغاء</button>
                 <button onClick={saveMeta} disabled={savingMeta}
@@ -453,6 +468,14 @@ export default function SettingsPage() {
                 <div className="flex items-center gap-3">
                   <span className="text-xs text-gray-500 w-24 shrink-0">خرائط Google</span>
                   <span className="text-sm text-gray-400 truncate max-w-[200px]" dir="ltr">{salon?.meta?.map_url || '—'}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-gray-500 w-24 shrink-0">map_place_url</span>
+                  <span className="text-sm text-gray-400 truncate max-w-[200px]" dir="ltr">{salon?.meta?.map_place_url || '—'}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-gray-500 w-24 shrink-0">map_embed_url</span>
+                  <span className="text-sm text-gray-400 truncate max-w-[200px]" dir="ltr">{salon?.meta?.map_embed_url || '—'}</span>
                 </div>
               </div>
               <button onClick={() => setMetaEditing(true)}
