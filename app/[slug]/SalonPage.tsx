@@ -17,7 +17,7 @@ function toEmbedUrl(url: string): string {
 interface Barber { id: string; name: string }
 interface Service { id: string; name_ar: string; price: number; duration_min: number }
 interface Props {
-  salon: { id: string; name: string; whatsapp_number: string | null; city: string | null; working_hours?: string | null; meta?: { tagline?: string; neighborhood?: string; hero_image?: string; map_url?: string; map_embed_url?: string; map_place_url?: string } | null }
+  salon: { id: string; name: string; whatsapp_number: string | null; city: string | null; working_hours?: string | null; meta?: { tagline?: string; neighborhood?: string; hero_image?: string; feature_image?: string; map_url?: string; map_embed_url?: string; map_place_url?: string } | null }
   barbers: Barber[]
   services: Service[]
   slug: string
@@ -460,7 +460,7 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
             <div className="grid gap-10 lg:grid-cols-12 lg:items-stretch">
               <div className="lg:col-span-5 reveal">
                 <div className="overflow-hidden rounded-3xl border border-gold/15 shadow-glow h-full" style={{ minHeight: '420px' }}>
-                  <img src="/barber.jpg" alt={`صالون ${salon.name}`} className="w-full h-full object-cover transition-transform duration-700 hover:scale-[1.03]" loading="lazy" />
+                  <img src={salon.meta?.feature_image || '/barber.jpg'} alt={`صالون ${salon.name}`} className="w-full h-full object-cover transition-transform duration-700 hover:scale-[1.03]" loading="lazy" />
                 </div>
               </div>
               <div className="lg:col-span-7 grid gap-4 sm:grid-cols-2 reveal reveal-d1">
