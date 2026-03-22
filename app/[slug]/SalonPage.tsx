@@ -289,7 +289,7 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
               </div>
               <h1 className="text-3xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl lg:text-[4.5rem]">
                 {salon.meta?.hero_title ? (
-                  <span className="block text-white">{salon.meta.hero_title}</span>
+                  <span className="block" style={{ color: '#C9A84C' }}>{salon.meta.hero_title}</span>
                 ) : (
                   <>
                     <span className="block text-white">العناية المثالية</span>
