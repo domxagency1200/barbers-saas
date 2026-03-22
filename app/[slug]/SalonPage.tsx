@@ -358,38 +358,42 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
 
         {/* ── OFFERS ── */}
         {(salon.meta?.offers?.filter(o => o.is_active) ?? []).length > 0 && (
-        <section id="offers" className="scroll-mt-24 border-y border-white/5 bg-[#FAF7F0] sec-light">
-          <div className="mx-auto max-w-6xl px-4 py-20 lg:px-6">
-            <div className="reveal mb-12">
+        <section id="offers" className="scroll-mt-24 bg-ink border-y border-white/5">
+          <div className="mx-auto max-w-6xl px-4 py-14 lg:py-20 lg:px-6">
+            <div className="reveal mb-10">
               <div className="sec-label">العروض الحصرية</div>
-              <h2 className="text-3xl font-extrabold tracking-tight lg:text-4xl">عروضنا</h2>
+              <h2 className="text-2xl font-extrabold tracking-tight sm:text-3xl lg:text-4xl">عروضنا</h2>
             </div>
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {salon.meta!.offers!.filter(o => o.is_active).map((offer, i) => {
+            <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {salon.meta!.offers!.filter(o => o.is_active).slice(0, 3).map((offer, i) => {
                 const offerServices = (offer.service_ids ?? []).map(sid => services.find(s => s.id === sid)?.name_ar).filter(Boolean)
                 return (
-                  <article key={offer.id} className={`glass-card reveal reveal-d${i + 1} rounded-3xl p-7 flex flex-col`}>
-                    {offer.badge && (
-                      <span className="mb-4 self-start inline-flex rounded-full border border-gold/25 px-3 py-1 text-xs font-bold text-gold bg-gold/8">{offer.badge}</span>
-                    )}
-                    <h3 className="text-xl font-extrabold mb-2">{offer.title}</h3>
-                    {offer.description && <p className="text-sm text-white/55 leading-relaxed mb-4">{offer.description}</p>}
-                    {offerServices.length > 0 && (
-                      <ul className="mb-5 space-y-1.5">
-                        {offerServices.map(name => (
-                          <li key={name} className="flex items-center gap-2 text-sm text-white/70">
-                            <svg className="h-4 w-4 shrink-0 text-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
-                            {name}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                    <div className="mt-auto">
-                      <div className="flex items-baseline gap-3 mb-5">
-                        {offer.price_current && <span className="text-3xl font-extrabold text-gold">{offer.price_current} ر.س</span>}
-                        {offer.price_old && <span className="text-base text-white/35 line-through">{offer.price_old} ر.س</span>}
+                  <article key={offer.id} className={`reveal reveal-d${i + 1} relative flex flex-col overflow-hidden rounded-2xl border border-white/8 p-6`}
+                    style={{ background: 'linear-gradient(145deg,rgba(30,24,12,.95) 0%,rgba(18,15,8,.98) 100%)', backdropFilter: 'blur(12px)' }}>
+                    <div className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(ellipse 80% 50% at 50% 0%,rgba(201,168,76,.07),transparent 70%)' }} />
+                    <div className="relative flex flex-col h-full">
+                      {offer.badge && (
+                        <span className="mb-3 self-start inline-flex rounded-full border border-gold/30 px-3 py-0.5 text-xs font-bold text-gold bg-gold/8">{offer.badge}</span>
+                      )}
+                      <h3 className="text-lg font-extrabold text-white mb-2 sm:text-xl">{offer.title}</h3>
+                      {offer.description && <p className="text-sm text-white/50 leading-relaxed mb-4">{offer.description}</p>}
+                      {offerServices.length > 0 && (
+                        <ul className="mb-5 space-y-1.5">
+                          {offerServices.map(name => (
+                            <li key={name} className="flex items-center gap-2 text-sm text-white/65">
+                              <svg className="h-3.5 w-3.5 shrink-0 text-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
+                              {name}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      <div className="mt-auto pt-4 border-t border-white/8">
+                        <div className="flex items-baseline gap-2 mb-4">
+                          {offer.price_current && <span className="text-2xl font-extrabold text-gold">{offer.price_current} ر.س</span>}
+                          {offer.price_old && <span className="text-sm text-white/30 line-through">{offer.price_old} ر.س</span>}
+                        </div>
+                        <button type="button" onClick={() => openBooking(offer.title)} className="btn-gold w-full rounded-xl px-4 py-2.5 text-sm font-extrabold text-black">احجز الآن</button>
                       </div>
-                      <button type="button" onClick={() => openBooking(offer.title)} className="btn-gold w-full rounded-xl px-5 py-3 text-sm font-extrabold text-black">احجز الآن</button>
                     </div>
                   </article>
                 )
