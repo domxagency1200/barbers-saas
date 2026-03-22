@@ -277,8 +277,8 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
             <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom,rgba(0,0,0,.18) 0%,rgba(15,15,15,.72) 55%,rgba(15,15,15,.98) 100%),radial-gradient(ellipse 90% 60% at 65% 5%,rgba(201,168,76,.13) 0%,transparent 65%),radial-gradient(ellipse 55% 75% at 5% 45%,rgba(255,255,255,.03) 0%,transparent 55%)' }} />
           </div>
 
-          <div className="mx-auto grid w-full max-w-6xl items-center gap-8 px-4 pb-12 pt-28 lg:grid-cols-12 lg:gap-16 lg:px-6 lg:pt-44 lg:pb-24">
-            <div className="lg:col-span-7 reveal">
+          <div className="mx-auto w-full max-w-6xl px-4 pb-12 pt-28 lg:px-6 lg:pt-44 lg:pb-24">
+            <div className="reveal">
               <div className="float-anim mb-8 inline-flex items-center gap-2.5 rounded-full border border-gold/30 px-5 py-2 text-sm bg-gold/7">
                 <svg className="h-3.5 w-3.5 text-gold flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                 <span className="font-bold text-gold">4.9 / 5</span>
@@ -306,41 +306,47 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
               </div>
             </div>
 
-            <div className="lg:col-span-5 reveal reveal-d2">
-              <div className="relative overflow-hidden rounded-3xl border border-gold/20 shadow-glow" style={{ background: 'rgba(11,11,11,.75)', backdropFilter: 'blur(22px)' }}>
-                <div className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(circle at 70% 15%,rgba(201,168,76,.1),transparent 55%)' }} />
-                <div className="relative p-7">
-                  <div className="text-[11px] font-bold tracking-widest text-gold uppercase mb-1">{salon.name}</div>
-                  <div className="text-2xl font-extrabold leading-snug mt-2">تفاصيل دقيقة<br /><span className="text-gold">أجواء راقية</span></div>
-                  <p className="mt-3 text-sm leading-relaxed text-white/55">حلاقة رجالية فاخرة في قلب المدينة، بالحجز المسبق فقط.</p>
-                  <div className="mt-6 rounded-2xl border border-gold/15 p-5 bg-gold/6">
-                    <div className="text-sm font-extrabold">حجز سريع</div>
-                    <div className="mt-1 text-xs text-white/50">اختر الحلاق والخدمة والوقت… والباقي علينا.</div>
-                    <div className="mt-4 grid gap-2.5 text-sm text-white/75">
-                      {['اختر الحلاق','حدّد الخدمات','ثبّت موعدك'].map((s, i) => (
-                        <div key={i} className="flex items-center gap-3">
-                          <span className="inline-flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs font-extrabold text-black" style={{ background: 'linear-gradient(135deg,#E8C96B,#C9A84C)' }}>{i+1}</span>
-                          <span>{s}</span>
-                        </div>
-                      ))}
-                    </div>
-                    <button type="button" onClick={() => openBooking()} className="btn-gold mt-5 w-full rounded-xl px-4 py-3 text-sm font-extrabold text-black">ابدأ الحجز</button>
-                  </div>
-                  {barbers.length > 0 && (
-                    <div className="mt-5 flex flex-wrap gap-2">
-                      {barbers.map(b => (
-                        <button key={b.id} type="button" onClick={() => openBooking('', b.name)} className="rounded-full border border-white/10 px-4 py-1.5 text-xs text-white/65 transition-all duration-200 hover:border-gold/40 hover:text-gold" style={{ background: 'rgba(255,255,255,.05)' }}>{b.name}</button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
           </div>
 
           <div className="scroll-dot absolute bottom-8 left-1/2 flex flex-col items-center gap-2 text-white/30 pointer-events-none" style={{ transform: 'translateX(-50%)' }}>
             <div className="text-[10px] tracking-widest uppercase">اكتشف</div>
             <div className="h-7 w-px" style={{ background: 'linear-gradient(to bottom,rgba(255,255,255,.3),transparent)' }} />
+          </div>
+        </section>
+
+        {/* ── QUICK BOOKING ── */}
+        <section className="bg-ink">
+          <div className="mx-auto max-w-6xl px-4 py-12 lg:px-6">
+            <div className="relative overflow-hidden rounded-3xl border border-gold/20 shadow-glow reveal" style={{ background: 'rgba(11,11,11,.75)', backdropFilter: 'blur(22px)' }}>
+              <div className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(circle at 70% 15%,rgba(201,168,76,.1),transparent 55%)' }} />
+              <div className="relative p-7 lg:flex lg:items-center lg:gap-12">
+                <div className="lg:flex-1">
+                  <div className="text-[11px] font-bold tracking-widest text-gold uppercase mb-1">{salon.name}</div>
+                  <div className="text-2xl font-extrabold leading-snug mt-2">تفاصيل دقيقة<br /><span className="text-gold">أجواء راقية</span></div>
+                  <p className="mt-3 text-sm leading-relaxed text-white/55">حلاقة رجالية فاخرة في قلب المدينة، بالحجز المسبق فقط.</p>
+                </div>
+                <div className="mt-6 lg:mt-0 lg:w-80 rounded-2xl border border-gold/15 p-5 bg-gold/6">
+                  <div className="text-sm font-extrabold">حجز سريع</div>
+                  <div className="mt-1 text-xs text-white/50">اختر الحلاق والخدمة والوقت… والباقي علينا.</div>
+                  <div className="mt-4 grid gap-2.5 text-sm text-white/75">
+                    {['اختر الحلاق','حدّد الخدمات','ثبّت موعدك'].map((s, i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <span className="inline-flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs font-extrabold text-black" style={{ background: 'linear-gradient(135deg,#E8C96B,#C9A84C)' }}>{i+1}</span>
+                        <span>{s}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <button type="button" onClick={() => openBooking()} className="btn-gold mt-5 w-full rounded-xl px-4 py-3 text-sm font-extrabold text-black">ابدأ الحجز</button>
+                </div>
+                {barbers.length > 0 && (
+                  <div className="mt-5 lg:hidden flex flex-wrap gap-2">
+                    {barbers.map(b => (
+                      <button key={b.id} type="button" onClick={() => openBooking('', b.name)} className="rounded-full border border-white/10 px-4 py-1.5 text-xs text-white/65 transition-all duration-200 hover:border-gold/40 hover:text-gold" style={{ background: 'rgba(255,255,255,.05)' }}>{b.name}</button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </section>
 
