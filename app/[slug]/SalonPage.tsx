@@ -17,7 +17,7 @@ function toEmbedUrl(url: string): string {
 interface Barber { id: string; name: string }
 interface Service { id: string; name_ar: string; price: number; duration_min: number }
 interface Props {
-  salon: { id: string; name: string; whatsapp_number: string | null; city: string | null; working_hours?: string | null; meta?: { tagline?: string; neighborhood?: string; hero_image?: string; map_url?: string; map_embed_url?: string } | null }
+  salon: { id: string; name: string; whatsapp_number: string | null; city: string | null; working_hours?: string | null; meta?: { tagline?: string; neighborhood?: string; hero_image?: string; map_url?: string; map_embed_url?: string; map_place_url?: string } | null }
   barbers: Barber[]
   services: Service[]
   slug: string
