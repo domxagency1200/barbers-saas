@@ -121,6 +121,7 @@ export default function SettingsPage() {
   const [metaForm, setMetaForm] = useState({ tagline: '', neighborhood: '', hero_image: '', map_place_url: '', map_embed_url: '' })
   const [metaEditing, setMetaEditing] = useState(false)
   const [savingMeta, setSavingMeta] = useState(false)
+  const [uploadingImage, setUploadingImage] = useState(false)
 
   const [salonId, setSalonId] = useState<string | null>(null)
 
@@ -221,6 +222,19 @@ export default function SettingsPage() {
       setHoursEditing(false)
     }
     setSavingHours(false)
+  }
+
+  async function uploadHeroImage(file: File) {
+    const id = salonId ?? salon?.id ?? null
+    if (!id) return
+    setUploadingImage(true)
+    const ext = file.name.split('.').pop()
+    const path = `${id}/${Date.now()}.${ext}`
+    const { error: upErr } = await supabase.storage.from('salon-images').upload(path, file, { upsert: true })
+    if (upErr) { setError('تعذّر رفع الصورة: ' + upErr.message); setUploadingImage(false); return }
+    const { data: urlData } = supabase.storage.from('salon-images').getPublicUrl(path)
+    setMetaForm(f => ({ ...f, hero_image: urlData.publicUrl }))
+    setUploadingImage(false)
   }
 
   async function saveMeta() {
@@ -421,9 +435,19 @@ export default function SettingsPage() {
                   placeholder="مثال: حي النزهة" className={inputCls} />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">رابط صورة الغلاف</label>
-                <input value={metaForm.hero_image} onChange={e => setMetaForm(f => ({ ...f, hero_image: e.target.value }))}
-                  placeholder="https://..." className={inputCls} dir="ltr" />
+                <label className="block text-xs text-gray-500 mb-1">صورة الغلاف</label>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <span className="px-4 py-2 text-sm rounded-xl border border-white/10 text-gray-300 hover:bg-white/5 transition-colors"
+                    style={{ backgroundColor: '#1a1a1a' }}>
+                    {uploadingImage ? 'جارٍ الرفع...' : 'اختر صورة'}
+                  </span>
+                  {metaForm.hero_image && !uploadingImage && (
+                    <span className="text-xs text-gray-500 truncate max-w-[180px]" dir="ltr">{metaForm.hero_image}</span>
+                  )}
+                  <input type="file" accept="image/*" className="hidden"
+                    disabled={uploadingImage}
+                    onChange={e => { const f = e.target.files?.[0]; if (f) uploadHeroImage(f) }} />
+                </label>
               </div>
               <div>
                 <label className="block text-xs text-gray-500 mb-1">رابط Google Maps (map_place_url)</label>
