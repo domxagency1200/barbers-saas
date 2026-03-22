@@ -300,9 +300,9 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
                 </a>
               </div>
               <div className="mt-8 flex items-center rounded-2xl border border-white/8 divide-x divide-x-reverse divide-white/8 overflow-hidden" style={{ background: 'rgba(255,255,255,.04)', backdropFilter: 'blur(10px)' }}>
-                <div className="flex-1 px-4 py-3"><div className="text-xs text-white/45 mb-0.5">الحجز</div><div className="text-sm font-bold">بالحجز المسبق فقط</div></div>
-                <div className="flex-1 px-4 py-3"><div className="text-xs text-white/45 mb-0.5">الموقع</div><div className="text-sm font-bold truncate">{neighborhood}</div></div>
-                <div className="flex-1 px-4 py-3"><div className="text-xs text-white/45 mb-0.5">ساعات العمل</div><div className="text-sm font-bold">{workingHours}</div></div>
+                <div className="flex-1 min-w-0 px-2.5 py-2.5 sm:px-4 sm:py-3"><div className="text-[10px] sm:text-xs text-white/45 mb-0.5">الحجز</div><div className="text-xs sm:text-sm font-bold truncate">بالحجز المسبق فقط</div></div>
+                <div className="flex-1 min-w-0 px-2.5 py-2.5 sm:px-4 sm:py-3"><div className="text-[10px] sm:text-xs text-white/45 mb-0.5">الموقع</div><div className="text-xs sm:text-sm font-bold truncate">{neighborhood}</div></div>
+                <div className="flex-1 min-w-0 px-2.5 py-2.5 sm:px-4 sm:py-3"><div className="text-[10px] sm:text-xs text-white/45 mb-0.5">ساعات العمل</div><div className="text-xs sm:text-sm font-bold truncate">{workingHours}</div></div>
               </div>
             </div>
 
