@@ -22,18 +22,26 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const { name, slug, city, email, password } = await req.json()
+  const { name, slug, city, phone, password } = await req.json()
 
-  if (!name || !slug || !email || !password) {
+  if (!name || !slug || !phone || !password) {
     return NextResponse.json({ error: 'جميع الحقول مطلوبة' }, { status: 400 })
   }
+
+  // Normalize phone
+  let normalizedPhone = phone.trim().replace(/\s+/g, '')
+  if (normalizedPhone.startsWith('+966')) normalizedPhone = '0' + normalizedPhone.slice(4)
+  if (normalizedPhone.startsWith('966')) normalizedPhone = '0' + normalizedPhone.slice(3)
+
+  // Generate internal email from phone (never exposed to user)
+  const email = `${normalizedPhone}@qasaty.app`
 
   const supabase = adminClient()
 
   // 1. Create salon
   const { data: salon, error: salonError } = await supabase
     .from('salons')
-    .insert({ name, slug, city: city || null })
+    .insert({ name, slug, city: city || null, whatsapp_number: normalizedPhone })
     .select('id')
     .single()
 

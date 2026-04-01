@@ -21,7 +21,7 @@ export default function AdminSalonsPage() {
   const [salonName, setSalonName] = useState('')
   const [slug, setSlug] = useState('')
   const [city, setCity] = useState('')
-  const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [addError, setAddError] = useState('')
   const [addSubmitting, setAddSubmitting] = useState(false)
@@ -113,7 +113,7 @@ export default function AdminSalonsPage() {
 
   function closeAdd() {
     setAddOpen(false)
-    setSalonName(''); setSlug(''); setCity(''); setEmail(''); setPassword(''); setAddError('')
+    setSalonName(''); setSlug(''); setCity(''); setPhone(''); setPassword(''); setAddError('')
   }
 
   function closeDelete() {
@@ -128,7 +128,7 @@ export default function AdminSalonsPage() {
       const res = await fetch('/api/admin/salons', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: salonName, slug, city, email, password }),
+        body: JSON.stringify({ name: salonName, slug, city, phone, password }),
       })
       const json = await res.json()
       if (!res.ok) { setAddError(json.error ?? 'حدث خطأ'); return }
@@ -330,7 +330,7 @@ export default function AdminSalonsPage() {
                 { label: 'اسم الصالون', value: salonName, set: setSalonName, type: 'text', placeholder: 'صالون الفخامة' },
                 { label: 'الرابط (slug)', value: slug, set: setSlug, type: 'text', placeholder: 'al-fakhama' },
                 { label: 'المدينة', value: city, set: setCity, type: 'text', placeholder: 'الرياض' },
-                { label: 'البريد الإلكتروني للمالك', value: email, set: setEmail, type: 'email', placeholder: 'owner@example.com' },
+                { label: 'رقم جوال المالك', value: phone, set: setPhone, type: 'tel', placeholder: '05XXXXXXXX' },
                 { label: 'كلمة المرور', value: password, set: setPassword, type: 'password', placeholder: '••••••••' },
               ].map(f => (
                 <label key={f.label} className="block space-y-1">
