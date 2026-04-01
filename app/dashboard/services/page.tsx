@@ -444,7 +444,7 @@ export default function ServicesPage() {
               </select>
             </div>
             <div className="flex items-center justify-end gap-2">
-              <button onClick={() => { setAdding(false); setNewForm({ name_ar: '', price: '', category_id: '' }) }} className="px-4 py-2 text-sm text-gray-500 hover:text-gray-300">إلغاء</button>
+              <button onClick={() => { setAdding(false); setNewForm({ name_ar: '', price: '', category_id: '', duration_min: 30 }) }} className="px-4 py-2 text-sm text-gray-500 hover:text-gray-300">إلغاء</button>
               <button onClick={saveNew} disabled={savingNew || !newForm.name_ar.trim() || !newForm.price}
                 className="px-5 py-2 text-sm font-medium rounded-xl disabled:opacity-40 transition-colors"
                 style={{ background: 'linear-gradient(135deg,#e8c97a,#C9A55A)', color: '#1a0f00' }}>
@@ -670,7 +670,7 @@ export default function ServicesPage() {
                 )}
 
                 {!addingOffer && (
-                  <button onClick={() => { setAddingOffer(true); setEditingOfferId(null); setOfferForm({ title: '', badge: '', description: '', price_current: '', price_old: '', is_active: true, service_ids: [] }) }}
+                  <button onClick={() => { setAddingOffer(true); setEditingOfferId(null); setOfferForm({ title: '', badge: '', description: '', price_current: '', price_old: '', is_active: true, service_ids: [], duration_min: 30 }) }}
                     className="w-full mt-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm transition-colors border border-dashed border-white/10 text-gray-500 hover:border-white/20 hover:text-gray-300">
                     <span className="text-base leading-none">+</span>إضافة عرض
                   </button>

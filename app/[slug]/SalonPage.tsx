@@ -19,7 +19,7 @@ function toEmbedUrl(url: string): string {
 interface Barber { id: string; name: string }
 interface Service { id: string; name_ar: string; price: number; duration_min: number }
 interface Props {
-  salon: { id: string; name: string; whatsapp_number: string | null; city: string | null; working_hours?: string | null; meta?: { hero_title?: string; tagline?: string; neighborhood?: string; hero_image?: string; feature_image?: string; map_url?: string; map_embed_url?: string; map_place_url?: string; card_theme?: string; custom_color?: string; features?: { title: string; description: string }[]; features_title?: string; features_subtitle?: string; about_title?: string; about_description?: string; years_experience?: number; rating?: number; happy_clients?: number; reviews_title?: string; reviews_subtitle?: string; reviews?: { name: string; text: string }[]; offers?:{ id: string; title: string; badge?: string; description?: string; price_current?: string; price_old?: string; is_active: boolean; service_ids?: string[] }[]; page_theme?: string; page_primary_color?: string; page_bg_color?: string; booking_button_hero_text?: string; categories?: { id: string; name: string }[]; service_categories?: Record<string, string> } | null }
+  salon: { id: string; name: string; whatsapp_number: string | null; city: string | null; working_hours?: string | null; meta?: { hero_title?: string; tagline?: string; neighborhood?: string; hero_image?: string; feature_image?: string; map_url?: string; map_embed_url?: string; map_place_url?: string; card_theme?: string; custom_color?: string; features?: { title: string; description: string }[]; features_title?: string; features_subtitle?: string; about_title?: string; about_description?: string; years_experience?: number; rating?: number; happy_clients?: number; reviews_title?: string; reviews_subtitle?: string; reviews?: { name: string; text: string }[]; offers?:{ id: string; title: string; badge?: string; description?: string; price_current?: string; price_old?: string; is_active: boolean; service_ids?: string[]; duration_min?: number }[]; page_theme?: string; page_primary_color?: string; page_bg_color?: string; booking_button_hero_text?: string; booking_button_text?: string; categories?: { id: string; name: string }[]; service_categories?: Record<string, string>; logo_url?: string; logo_letter?: string; booking_hero_title?: string; booking_hero_description?: string; booking_card_title?: string; booking_card_subtitle?: string; booking_step1?: string; booking_step2?: string; booking_step3?: string; [key: string]: any } | null }
   barbers: Barber[]
   services: Service[]
   slug: string
@@ -294,7 +294,7 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
       try {
         const selectedSvcs = services.filter(s => checkedServices.has(s.name_ar))
         const activeOffer = selectedOfferId ? (salon.meta?.offers ?? []).find((o: any) => o.id === selectedOfferId) : null
-        const duration = activeOffer?.duration_min ?? (selectedSvcs.length > 0 ? Math.max(...selectedSvcs.map((s: Service) => s.duration_min)) : 30)
+        const duration = (activeOffer as any)?.duration_min ?? (selectedSvcs.length > 0 ? Math.max(...selectedSvcs.map((s: Service) => s.duration_min)) : 30)
         const url = `/api/availability?barber_id=${barberObj.id}&date=${date}&duration=${duration}&utcOffset=180&salon_id=${salon.id}`
         const res = await fetch(url)
         const json = await res.json()
@@ -355,7 +355,7 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
     if (selectedServices.length === 0) { setFormMsg({ text: 'يرجى اختيار خدمة.', error: true }); return }
     if (!date || !time) { setFormMsg({ text: 'يرجى اختيار التاريخ والوقت.', error: true }); return }
     const selectedOffer = selectedOfferId ? (salon.meta?.offers ?? []).find((o: any) => o.id === selectedOfferId) : null
-    const totalDuration = selectedOffer?.duration_min ?? (selectedServices.length > 0 ? Math.max(...selectedServices.map(s => s.duration_min)) : 30)
+    const totalDuration = (selectedOffer as any)?.duration_min ?? (selectedServices.length > 0 ? Math.max(...selectedServices.map(s => s.duration_min)) : 30)
     const starts_at = new Date(`${date}T${time}:00+03:00`).toISOString()
     const ends_at = new Date(new Date(starts_at).getTime() + totalDuration * 60 * 1000).toISOString()
     setSubmitting(true)
