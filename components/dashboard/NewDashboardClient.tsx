@@ -208,7 +208,7 @@ export default function NewDashboardClient({ todayBookings, monthBookings, salon
       const existing = await reg.pushManager.getSubscription()
       const sub = existing ?? await reg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
+        applicationServerKey: 'BNEgTj_n0t5fSrQGKtaQhHUi5lAhpiuoInXwWRsy8LWXOKcyh9kUxFKH23FbRtRi7ZCFYaCskHUtnePDnn1k0R4',
       })
       if (!salonId) { alert('تعذّر تحديد الصالون، أعد تحميل الصفحة'); return }
       const res = await fetch('/api/push/subscribe', {
