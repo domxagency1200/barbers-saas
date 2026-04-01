@@ -193,7 +193,13 @@ export default function NewDashboardClient({ todayBookings, monthBookings, salon
       setNotifEnabled(false)
       return
     }
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
+      if (isIOS) {
+        alert('لتفعيل الإشعارات على iPhone:\n\nاضغط على زر المشاركة ← "إضافة إلى الشاشة الرئيسية"\nثم افتح التطبيق من الشاشة الرئيسية وفعّل الإشعارات')
+      }
+      return
+    }
     const permission = await Notification.requestPermission()
     if (permission !== 'granted') return
     const reg = await navigator.serviceWorker.register('/sw.js')
