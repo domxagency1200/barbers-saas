@@ -1,7 +1,6 @@
 'use client'
 
-export const dynamic = 'force-dynamic'
-
+import { Suspense } from 'react'
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -11,7 +10,7 @@ import DatePicker from '@/components/dashboard/DatePicker'
 
 interface Booking { id: string; ends_at: string; barber_id: string | null }
 
-export default function BookingsPage() {
+function BookingsPageInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = createClient()
@@ -122,3 +121,5 @@ export default function BookingsPage() {
     </div>
   )
 }
+
+export default function BookingsPage() { return <Suspense><BookingsPageInner /></Suspense> }
