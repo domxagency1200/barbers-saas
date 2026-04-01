@@ -835,11 +835,13 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
                   ))}
                 </div>
               </div>
+              {salon.meta?.about_image && (
               <div className="hidden lg:block lg:col-span-6 reveal reveal-d1">
                 <div className="overflow-hidden rounded-3xl border border-gold/15 shadow-glow" style={{ height: '420px' }}>
-                  <img src={salon.meta?.feature_image || '/barber.jpg'} alt={`صالون ${salon.name}`} className="w-full h-full object-cover transition-transform duration-700 hover:scale-[1.03]" loading="lazy" />
+                  <img src={salon.meta.about_image} alt={`صالون ${salon.name}`} className="w-full h-full object-cover transition-transform duration-700 hover:scale-[1.03]" loading="lazy" />
                 </div>
               </div>
+              )}
             </div>
           </div>
         </section>
