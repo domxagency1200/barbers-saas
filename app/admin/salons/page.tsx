@@ -29,6 +29,7 @@ export default function AdminSalonsPage() {
   // Edit modal
   const [editTarget, setEditTarget] = useState<Salon | null>(null)
   const [editName, setEditName] = useState('')
+  const [editSlug, setEditSlug] = useState('')
   const [editCity, setEditCity] = useState('')
   const [editPlan, setEditPlan] = useState('')
   const [editError, setEditError] = useState('')
@@ -60,11 +61,11 @@ export default function AdminSalonsPage() {
   useEffect(() => { if (salons.length > 0) console.log('[salons]', salons) }, [salons])
 
   function openEdit(s: Salon) {
-    setEditTarget(s); setEditName(s.name); setEditCity(s.city ?? ''); setEditPlan(s.plan ?? ''); setEditError('')
+    setEditTarget(s); setEditName(s.name); setEditSlug(s.slug); setEditCity(s.city ?? ''); setEditPlan(s.plan ?? ''); setEditError('')
   }
 
   function closeEdit() {
-    setEditTarget(null); setEditName(''); setEditCity(''); setEditPlan(''); setEditError('')
+    setEditTarget(null); setEditName(''); setEditSlug(''); setEditCity(''); setEditPlan(''); setEditError('')
   }
 
   function openTransfer(s: Salon) {
@@ -101,11 +102,11 @@ export default function AdminSalonsPage() {
       const res = await fetch(`/api/admin/salons/${editTarget.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: editName, city: editCity, plan: editPlan }),
+        body: JSON.stringify({ name: editName, slug: editSlug, city: editCity, plan: editPlan }),
       })
       const json = await res.json()
       if (!res.ok) { setEditError(json.error ?? 'حدث خطأ'); return }
-      setSalons(prev => prev.map(s => s.id === editTarget.id ? { ...s, name: editName, city: editCity || null, plan: editPlan || null } : s))
+      setSalons(prev => prev.map(s => s.id === editTarget.id ? { ...s, name: editName, slug: editSlug, city: editCity || null, plan: editPlan || null } : s))
       closeEdit()
     } catch { setEditError('حدث خطأ، يرجى المحاولة مرة أخرى') }
     finally { setEditSubmitting(false) }
@@ -259,6 +260,10 @@ export default function AdminSalonsPage() {
               <label className="block space-y-1">
                 <span className="text-xs text-gray-400">اسم الصالون</span>
                 <input required type="text" value={editName} onChange={e => setEditName(e.target.value)} className={inputCls} />
+              </label>
+              <label className="block space-y-1">
+                <span className="text-xs text-gray-400">الرابط (slug)</span>
+                <input required type="text" value={editSlug} onChange={e => setEditSlug(e.target.value.toLowerCase().replace(/\s+/g, '-'))} placeholder="al-fakhama" dir="ltr" className={inputCls} />
               </label>
               <label className="block space-y-1">
                 <span className="text-xs text-gray-400">المدينة</span>

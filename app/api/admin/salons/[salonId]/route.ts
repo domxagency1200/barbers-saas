@@ -16,11 +16,13 @@ export async function PUT(
 ) {
   try {
     const { salonId } = await params
-    const { name, city, plan } = await req.json()
+    const { name, city, plan, slug } = await req.json()
     const supabase = await createClient()
+    const update: Record<string, unknown> = { name, city: city || null, plan: plan || null }
+    if (slug) update.slug = slug.trim().toLowerCase()
     const { error } = await supabase
       .from('salons')
-      .update({ name, city: city || null, plan: plan || null })
+      .update(update)
       .eq('id', salonId)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     return NextResponse.json({ ok: true })
