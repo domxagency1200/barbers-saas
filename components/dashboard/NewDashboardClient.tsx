@@ -206,9 +206,14 @@ export default function NewDashboardClient({ todayBookings, monthBookings, salon
       const reg = await navigator.serviceWorker.register('/sw.js')
       await navigator.serviceWorker.ready
       const existing = await reg.pushManager.getSubscription()
+      const rawKey = 'BNEgTj_n0t5fSrQGKtaQhHUi5lAhpiuoInXwWRsy8LWXOKcyh9kUxFKH23FbRtRi7ZCFYaCskHUtnePDnn1k0R4'
+      const base64 = rawKey.replace(/-/g, '+').replace(/_/g, '/')
+      const binary = atob(base64)
+      const vapidKey = new Uint8Array(binary.length)
+      for (let i = 0; i < binary.length; i++) vapidKey[i] = binary.charCodeAt(i)
       const sub = existing ?? await reg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: 'BNEgTj_n0t5fSrQGKtaQhHUi5lAhpiuoInXwWRsy8LWXOKcyh9kUxFKH23FbRtRi7ZCFYaCskHUtnePDnn1k0R4',
+        applicationServerKey: vapidKey,
       })
       if (!salonId) { alert('تعذّر تحديد الصالون، أعد تحميل الصفحة'); return }
       const res = await fetch('/api/push/subscribe', {
