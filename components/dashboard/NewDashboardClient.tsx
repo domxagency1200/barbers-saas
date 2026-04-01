@@ -200,21 +200,28 @@ export default function NewDashboardClient({ todayBookings, monthBookings, salon
       }
       return
     }
-    const permission = await Notification.requestPermission()
-    if (permission !== 'granted') return
-    const reg = await navigator.serviceWorker.register('/sw.js')
-    await navigator.serviceWorker.ready
-    const existing = await reg.pushManager.getSubscription()
-    const sub = existing ?? await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-    })
-    await fetch('/api/push/subscribe', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ subscription: sub.toJSON(), salon_id: salonId }),
-    })
-    setNotifEnabled(true)
+    try {
+      const permission = await Notification.requestPermission()
+      if (permission !== 'granted') { alert('لم يتم منح إذن الإشعارات'); return }
+      const reg = await navigator.serviceWorker.register('/sw.js')
+      await navigator.serviceWorker.ready
+      const existing = await reg.pushManager.getSubscription()
+      const sub = existing ?? await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
+      })
+      if (!salonId) { alert('تعذّر تحديد الصالون، أعد تحميل الصفحة'); return }
+      const res = await fetch('/api/push/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subscription: sub.toJSON(), salon_id: salonId }),
+      })
+      if (!res.ok) { alert('فشل حفظ الإشعارات، حاول مرة أخرى'); return }
+      setNotifEnabled(true)
+      alert('✓ تم تفعيل الإشعارات')
+    } catch (err) {
+      alert('حدث خطأ: ' + (err instanceof Error ? err.message : String(err)))
+    }
   }
 
   const barberGroups = groupByBarber(todayBookings)
