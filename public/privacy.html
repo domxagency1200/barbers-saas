@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>السياسات — قَصتي</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #f7f6f3;
+      color: #1a1a1a;
+      font-family: 'Cairo', sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    .page-header {
+      background: #0B0B0B;
+      padding: 1.5rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .brand { font-size: 1.2rem; font-weight: 900; color: #D4AF37; }
+    .back {
+      color: rgba(255,255,255,0.5);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .back:hover { color: #D4AF37; }
+
+    /* ── Hero strip ── */
+    .page-hero {
+      background: linear-gradient(135deg, #0B0B0B 0%, #1a1408 100%);
+      padding: 3rem 1.5rem;
+      text-align: center;
+      border-bottom: 1px solid rgba(212,175,55,0.15);
+    }
+    .page-hero h1 {
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: #ffffff;
+      margin-bottom: 0.5rem;
+    }
+    .page-hero p { font-size: 0.85rem; color: rgba(255,255,255,0.35); }
+
+    /* ── Content ── */
+    .container {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem 4rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .policy-card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 1.5rem 1.75rem;
+      border: 1px solid rgba(0,0,0,0.06);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+    }
+    .policy-card h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin-bottom: 0.6rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .policy-card h3 span.num {
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      background: #D4AF37;
+      color: #0B0B0B;
+      font-size: 0.75rem;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .policy-card p {
+      font-size: 0.9rem;
+      color: rgba(0,0,0,0.55);
+      line-height: 1.85;
+    }
+    .policy-card a { color: #D4AF37; text-decoration: none; }
+    .policy-card a:hover { text-decoration: underline; }
+
+    /* ── Footer ── */
+    .page-footer {
+      text-align: center;
+      padding: 1.5rem;
+      font-size: 0.75rem;
+      color: rgba(0,0,0,0.3);
+      border-top: 1px solid rgba(0,0,0,0.06);
+    }
+  </style>
+</head>
+<body>
+
+  <header class="page-header">
+    <div class="brand">قَصتي.</div>
+    <a href="/landing.html" class="back">← العودة للرئيسية</a>
+  </header>
+
+  <div class="page-hero">
+    <h1>السياسات</h1>
+    <p>سياسات الاستخدام والخصوصية لمنصة قَصتي</p>
+  </div>
+
+  <div class="container">
+
+    <div class="policy-card">
+      <h3><span class="num">١</span> سياسة الاستخدام</h3>
+      <p>منصة قَصتي مخصصة لإدارة حجوزات الصالونات في المملكة العربية السعودية. يلتزم المستخدم باستخدام المنصة للأغراض المشروعة فقط وعدم انتهاك حقوق الآخرين أو إساءة استخدام الخدمات المقدمة.</p>
+    </div>
+
+    <div class="policy-card">
+      <h3><span class="num">٢</span> سياسة الخصوصية</h3>
+      <p>نحن في قَصتي نحرص على حماية بياناتك. نجمع فقط المعلومات الضرورية لإتمام الحجز كالاسم ورقم الجوال، ولا نشاركها مع أي طرف ثالث.</p>
+    </div>
+
+    <div class="policy-card">
+      <h3><span class="num">٣</span> سياسة الاشتراك والدفع</h3>
+      <p>الاشتراك شهري ويُجدَّد تلقائياً في تاريخ الاستحقاق. يحق للمشترك إلغاء اشتراكه في أي وقت من خلال التواصل معنا. لا تُسترد الرسوم المدفوعة عن الفترة الحالية عند الإلغاء. جميع المدفوعات تتم عبر بوابة ميسر المعتمدة والآمنة.</p>
+    </div>
+
+    <div class="policy-card">
+      <h3><span class="num">٤</span> سياسة الاسترداد</h3>
+      <p>لا يحق استرداد رسوم الاشتراك بعد بدء الفترة الشهرية. في حالة وجود خلل تقني من جانب منصة قَصتي يمنع الاستخدام لأكثر من 72 ساعة متواصلة، يحق للمشترك تمديد مدة الاشتراك بضعف عدد أيام الخلل.</p>
+    </div>
+
+    <div class="policy-card">
+      <h3><span class="num">٥</span> سياسة إلغاء الحجوزات</h3>
+      <p>سياسة إلغاء الحجوزات تحددها كل صالون بشكل مستقل. منصة قَصتي وسيط تقني ولا تتدخل في قرارات الإلغاء الخاصة بالصالونات.</p>
+    </div>
+
+    <div class="policy-card">
+      <h3><span class="num">٦</span> المسؤولية القانونية</h3>
+      <p>منصة قَصتي وسيط تقني بين الصالون والعميل. لا تتحمل المنصة مسؤولية جودة الخدمات المقدمة من الصالونات المشتركة. في حال النزاعات، يُرجع إلى نظام التجارة الإلكترونية السعودي ونظام حماية المستهلك.</p>
+    </div>
+
+    <div class="policy-card">
+      <h3><span class="num">٧</span> الملكية الفكرية</h3>
+      <p>جميع حقوق الملكية الفكرية للمنصة محفوظة لمنصة قَصتي. لا يحق نسخ أو توزيع أي محتوى من المنصة دون إذن مسبق.</p>
+    </div>
+
+    <div class="policy-card">
+      <h3><span class="num">٩</span> سياسة الربط بالأنظمة المحاسبية</h3>
+      <p>تقتصر مسؤولية المنصة على الربط التقني بالأنظمة المحاسبية المعتمدة والمزودة بمفاتيح (API) جاهزة من قبل العميل، ولا يشمل العقد تأسيس الربط القانوني مع هيئة الزكاة والضريبة والجمارك أو تحمل أي تبعات نظامية ناتجة عن عدم امتثال العميل للمتطلبات التنظيمية المعمول بها.</p>
+    </div>
+
+    <div class="policy-card">
+      <h3><span class="num">١٠</span> التواصل والدعم</h3>
+      <p>لأي استفسار أو شكوى:<br/>
+      البريد الإلكتروني: <a href="mailto:qasaty1@gmail.com">qasaty1@gmail.com</a><br/>
+      واتساب: تواصل معنا عبر الرابط في الموقع</p>
+    </div>
+
+  </div>
+
+  <div class="page-footer">© 2026 قَصتي. جميع الحقوق محفوظة.</div>
+
+</body>
+</html>
