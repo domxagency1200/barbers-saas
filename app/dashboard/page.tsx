@@ -1,67 +1,73 @@
-import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
+import { getTabSalonId, setTabSalonId } from '@/lib/tabSalonId'
 import NewDashboardClient from '@/components/dashboard/NewDashboardClient'
 
-export default async function NewDashboardPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/dashboard/login')
+const bookingSelect = 'id, starts_at, ends_at, status, payment_status, barber_id, customers(name, phone), barbers(name), services'
 
-  const { data: member } = await supabase
-    .from('salon_members')
-    .select('salon_id')
-    .eq('user_id', user.id)
-    .single()
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function normalize(rows: any[] | null) {
+  return (rows ?? []).map((b: any) => ({
+    ...b,
+    customers: Array.isArray(b.customers) ? (b.customers[0] ?? null) : (b.customers ?? null),
+    barbers:   Array.isArray(b.barbers)   ? (b.barbers[0]   ?? null) : (b.barbers   ?? null),
+    services:  b.services || [],
+  }))
+}
 
-  const salonId = member?.salon_id
+export default function NewDashboardPage() {
+  const router = useRouter()
+  const supabase = createClient()
 
-  const now = new Date()
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0).toISOString()
-  const todayEnd   = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0).toISOString()
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
-  const monthEnd   = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString()
+  const [todayBookings, setTodayBookings] = useState<any[]>([])
+  const [monthBookings, setMonthBookings] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [salonId, setSalonId] = useState<string | null>(null)
 
-  const bookingSelect = 'id, starts_at, ends_at, status, barber_id, customers(name, phone), barbers(name), services(name_ar, price)'
+  useEffect(() => {
+    async function load() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { router.push('/dashboard/login'); return }
 
-  let todayQ = supabase
-    .from('bookings')
-    .select(bookingSelect)
-    .gte('starts_at', todayStart)
-    .lt('starts_at', todayEnd)
-    .order('starts_at', { ascending: true })
+      let salonId = getTabSalonId()
+      if (!salonId) {
+        const res = await fetch('/api/dashboard/fix-salon-metadata', { method: 'POST' })
+        if (res.ok) { const j = await res.json(); salonId = j.salon_id ?? null }
+        if (salonId) setTabSalonId(salonId)
+      }
+      setSalonId(salonId)
 
-  let monthQ = supabase
-    .from('bookings')
-    .select(bookingSelect)
-    .gte('starts_at', monthStart)
-    .lt('starts_at', monthEnd)
-    .order('starts_at', { ascending: true })
+      // تحديث الحجوزات المنتهية إلى "مكتمل" تلقائياً
+      fetch('/api/dashboard/auto-complete', { method: 'POST' }).catch(() => null)
 
-  if (salonId) {
-    todayQ = todayQ.eq('salon_id', salonId)
-    monthQ = monthQ.eq('salon_id', salonId)
-  }
+      const now = new Date()
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0).toISOString()
+      const todayEnd   = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0).toISOString()
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+      const monthEnd   = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString()
 
-  const [
-    { data: todayRaw },
-    { data: monthRaw },
-  ] = await Promise.all([todayQ, monthQ])
+      const base = supabase.from('bookings').select(bookingSelect)
+      const [{ data: todayRaw }, { data: monthRaw }] = await Promise.all([
+        (salonId ? base.eq('salon_id', salonId) : base).gte('starts_at', todayStart).lt('starts_at', todayEnd).order('starts_at', { ascending: true }),
+        (salonId ? supabase.from('bookings').select(bookingSelect).eq('salon_id', salonId) : supabase.from('bookings').select(bookingSelect)).gte('starts_at', monthStart).lt('starts_at', monthEnd).order('starts_at', { ascending: true }),
+      ])
 
-  // Supabase returns joined relations as arrays; normalize to single object | null
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function normalize(rows: any[] | null) {
-    return (rows ?? []).map((b: any) => ({
-      ...b,
-      customers: Array.isArray(b.customers) ? (b.customers[0] ?? null) : (b.customers ?? null),
-      barbers:   Array.isArray(b.barbers)   ? (b.barbers[0]   ?? null) : (b.barbers   ?? null),
-      services:  Array.isArray(b.services)  ? (b.services[0]  ?? null) : (b.services  ?? null),
-    }))
-  }
+      setTodayBookings(normalize(todayRaw))
+      setMonthBookings(normalize(monthRaw))
+      setLoading(false)
+    }
+    load()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
-  return (
-    <NewDashboardClient
-      todayBookings={normalize(todayRaw)}
-      monthBookings={normalize(monthRaw)}
-    />
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#1a1a1a' }}>
+      <p className="text-sm text-gray-500">جارٍ التحميل...</p>
+    </div>
   )
+
+  return <NewDashboardClient todayBookings={todayBookings} monthBookings={monthBookings} salonId={salonId} />
 }

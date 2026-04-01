@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 export async function POST(req: NextRequest) {
   const body = await req.json()
 
-  const { barber_id, service_id, customer_name, customer_phone, starts_at, ends_at, salon_id } = body
+  const { barber_id, service_id, services, customer_name, customer_phone, starts_at, ends_at, salon_id } = body
 
   if (!barber_id || !service_id || !customer_name || !customer_phone || !starts_at || !ends_at || !salon_id) {
     return NextResponse.json({ error: 'All fields are required' }, { status: 400 })
@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
     .insert({
       barber_id,
       service_id,
+      services: services ?? [],
       customer_id: customer.id,
       starts_at,
       ends_at,
@@ -39,6 +40,20 @@ export async function POST(req: NextRequest) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
+
+  // Send push notification to salon owner
+  try {
+    const baseUrl = req.nextUrl.origin
+    await fetch(`${baseUrl}/api/push/send`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        salon_id,
+        title: 'حجز جديد 🎉',
+        body: `${customer_name} — ${new Date(starts_at).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}`,
+      }),
+    })
+  } catch { /* ignore push errors */ }
 
   return NextResponse.json(data, { status: 201 })
 }

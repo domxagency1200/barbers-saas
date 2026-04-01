@@ -94,5 +94,7 @@ export async function GET(req: NextRequest) {
     })
   })
 
-  return NextResponse.json({ slots: availableSlots })
+  const bookedSlots = allSlots.filter(s => !availableSlots.includes(s))
+
+  return NextResponse.json({ slots: availableSlots, bookedSlots })
 }

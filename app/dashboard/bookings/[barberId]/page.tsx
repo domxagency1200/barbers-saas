@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import DeleteBookingButton from '@/components/dashboard/DeleteBookingButton'
 import EditBookingModal from '@/components/dashboard/EditBookingModal'
+import RefundBookingButton from '@/components/dashboard/RefundBookingButton'
 
 function formatTime(iso: string) {
   const d = new Date(iso)
@@ -69,6 +70,13 @@ export default async function BarberBookingsPage({
     revalidatePath(`/dashboard/bookings/${barberId}`)
   }
 
+  async function refundBooking(bookingId: string) {
+    'use server'
+    const supabase = await createClient()
+    await supabase.from('bookings').update({ payment_status: 'refunded', status: 'cancelled' }).eq('id', bookingId)
+    revalidatePath(`/dashboard/bookings/${barberId}`)
+  }
+
   const nowTime = new Date()
 
   return (
@@ -98,6 +106,7 @@ export default async function BarberBookingsPage({
                     currentStartsAt={b.starts_at}
                     onReschedule={rescheduleBooking}
                   />
+                  <RefundBookingButton onRefund={refundBooking.bind(null, b.id)} />
                   <DeleteBookingButton onDelete={deleteBooking.bind(null, b.id)} />
                 </div>
               </div>

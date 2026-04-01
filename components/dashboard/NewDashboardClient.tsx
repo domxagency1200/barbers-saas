@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 
 // ── Types ────────────────────────────────────────────────────
@@ -10,15 +10,17 @@ interface Booking {
   starts_at: string
   ends_at: string
   status: string
+  payment_status: string | null
   barber_id: string | null
   customers: { name: string; phone: string } | null
   barbers: { name: string } | null
-  services: { name_ar: string; price: number } | null
+  services: { name_ar: string; price: number }[]
 }
 
 interface Props {
   todayBookings: Booking[]
   monthBookings: Booking[]
+  salonId: string | null
 }
 
 // ── Constants ────────────────────────────────────────────────
@@ -70,8 +72,11 @@ function groupByBarber(bookings: Booking[]): { id: string | null; name: string; 
 // ── Sub-components ───────────────────────────────────────────
 
 function BookingCard({ b }: { b: Booking }) {
+  console.log(b.services)
+  const total = b.services.reduce((s, sv) => s + (sv.price ?? 0), 0)
+  const paid = b.payment_status === 'paid'
   return (
-    <div className="rounded-xl border border-white/10 p-3 space-y-1.5" style={{ backgroundColor: '#242424' }}>
+    <div className="rounded-2xl border border-white/10 p-3 space-y-1.5 transition-all duration-200 hover:border-white/[0.17]" style={{ backgroundColor: '#242424' }}>
       <div className="flex items-center justify-between gap-1">
         <p className="font-semibold text-white text-sm truncate">{b.customers?.name ?? '—'}</p>
         <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium shrink-0 ${STATUS_COLOR[b.status] ?? 'bg-white/10 text-gray-400'}`}>
@@ -79,10 +84,22 @@ function BookingCard({ b }: { b: Booking }) {
         </span>
       </div>
       <p className="text-xs text-gray-500">{b.customers?.phone ?? '—'}</p>
-      <p className="text-xs text-gray-400">{b.services?.name_ar ?? '—'}</p>
-      <div className="flex items-center justify-between text-xs">
-        <span className="font-medium text-gray-300">{formatTime(b.starts_at)}</span>
-        <span style={{ color: '#D4A843' }}>{b.services?.price ?? 0} ر.س</span>
+      <div className="space-y-0.5">
+        {b.services.length > 0
+          ? b.services.map((sv, i) => (
+              <p key={i} className="text-xs text-gray-400">• {sv.name_ar} — {sv.price} ر.س</p>
+            ))
+          : <p className="text-xs text-gray-500">—</p>
+        }
+      </div>
+      <div className="flex items-center justify-between text-xs pt-1 border-t border-white/5">
+        <div className="flex items-center gap-2">
+          <span className="font-medium text-gray-300">{formatTime(b.starts_at)}</span>
+          <span className={`px-1.5 py-0.5 rounded-full font-medium ${paid ? 'bg-green-900/40 text-green-400' : 'bg-red-900/30 text-red-400'}`}>
+            {paid ? 'مدفوع' : 'غير مدفوع'}
+          </span>
+        </div>
+        <span className="font-bold" style={{ color: '#C9A55A' }}>{total} ر.س</span>
       </div>
     </div>
   )
@@ -116,13 +133,13 @@ function MonthCalendar({
   ]
 
   return (
-    <div className="rounded-2xl border border-white/10 p-4" style={{ backgroundColor: '#242424' }}>
-      <p className="text-sm font-semibold mb-3 text-center" style={{ color: '#D4A843' }}>
+    <div className="rounded-3xl border border-white/[0.07] p-4" style={{ backgroundColor: '#111113' }}>
+      <p className="text-sm font-semibold mb-3 text-center" style={{ color: '#C9A55A' }}>
         {ARABIC_MONTHS[month]} {year}
       </p>
-      <div className="grid grid-cols-7 gap-1 mb-1">
+      <div className="grid grid-cols-7 gap-1 mb-2 border-b pb-2" style={{ borderColor: 'rgba(255,255,255,0.04)' }}>
         {ARABIC_DAYS_SHORT.map(d => (
-          <div key={d} className="text-center text-xs text-gray-500 py-1">{d}</div>
+          <div key={d} className="text-center text-xs py-1" style={{ color: 'rgba(255,255,255,0.15)', letterSpacing: '0.03em' }}>{d}</div>
         ))}
       </div>
       <div className="grid grid-cols-7 gap-1">
@@ -136,15 +153,15 @@ function MonthCalendar({
               onClick={() => onSelectDay(day)}
               className="aspect-square rounded-full text-xs font-medium flex flex-col items-center justify-center relative transition-colors"
               style={{
-                backgroundColor: isToday ? '#D4A843' : isSelected ? '#2e2e2e' : undefined,
-                color: isToday ? '#1a1a1a' : isSelected ? 'white' : '#9ca3af',
+                backgroundColor: isToday ? '#C9A55A' : isSelected ? 'rgba(255,255,255,0.08)' : undefined,
+                color: isToday ? '#1a1a1a' : isSelected ? 'white' : 'rgba(255,255,255,0.38)',
               }}
             >
               {day}
               {countsByDay[day] ? (
                 <span
                   className="absolute bottom-0.5 w-1 h-1 rounded-full"
-                  style={{ backgroundColor: isToday ? '#1a1a1a' : '#D4A843' }}
+                  style={{ backgroundColor: isToday ? '#1a1a1a' : '#C9A55A' }}
                 />
               ) : null}
             </button>
@@ -157,80 +174,144 @@ function MonthCalendar({
 
 // ── Main component ───────────────────────────────────────────
 
-export default function NewDashboardClient({ todayBookings, monthBookings }: Props) {
+export default function NewDashboardClient({ todayBookings, monthBookings, salonId }: Props) {
   const now = new Date()
   const [selectedDay, setSelectedDay] = useState(now.getDate())
+  const [notifEnabled, setNotifEnabled] = useState(false)
+
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return
+    navigator.serviceWorker.ready.then(reg =>
+      reg.pushManager.getSubscription().then(sub => {
+        if (sub) setNotifEnabled(true)
+      })
+    ).catch(() => null)
+  }, [])
+
+  async function toggleNotifications() {
+    if (notifEnabled) {
+      setNotifEnabled(false)
+      return
+    }
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return
+    const permission = await Notification.requestPermission()
+    if (permission !== 'granted') return
+    const reg = await navigator.serviceWorker.register('/sw.js')
+    await navigator.serviceWorker.ready
+    const existing = await reg.pushManager.getSubscription()
+    const sub = existing ?? await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
+    })
+    await fetch('/api/push/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subscription: sub.toJSON(), salon_id: salonId }),
+    })
+    setNotifEnabled(true)
+  }
 
   const barberGroups = groupByBarber(todayBookings)
-  const todayRevenue = todayBookings.reduce((s, b) => s + (b.services?.price ?? 0), 0)
+  const todayRevenue = todayBookings.reduce((s, b) => s + b.services.reduce((ss, sv) => ss + (sv.price ?? 0), 0), 0)
 
   const selectedDayBookings = monthBookings.filter(b =>
     isSameDay(b.starts_at, now.getFullYear(), now.getMonth(), selectedDay)
   )
 
   return (
-    <div className="p-4 space-y-6 max-w-5xl mx-auto">
+    <div dir="rtl" style={{ backgroundColor: '#0a0a0c', minHeight: '100vh', padding: '24px 16px' }}>
+      <div style={{ maxWidth: 600, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-      {/* Summary cards */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-2xl border border-white/10 p-4" style={{ backgroundColor: '#242424' }}>
-          <p className="text-xs text-gray-500 mb-1">حجوزات اليوم</p>
-          <p className="text-3xl font-bold text-white">{todayBookings.length}</p>
+        {/* Header */}
+        <div>
+          <h1 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fff', margin: 0, letterSpacing: '-0.02em' }}>لوحة التحكم</h1>
+          <p style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.28)', marginTop: 2 }}>{ARABIC_MONTHS[now.getMonth()]} {now.getFullYear()}</p>
         </div>
-        <div className="rounded-2xl border border-white/10 p-4" style={{ backgroundColor: '#242424' }}>
-          <p className="text-xs text-gray-500 mb-1">إيرادات اليوم</p>
-          <p className="text-3xl font-bold" style={{ color: '#D4A843' }}>{todayRevenue}</p>
-          <p className="text-xs text-gray-500">ر.س</p>
+
+        {/* Summary cards */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <div style={{ borderRadius: 20, border: '1px solid rgba(255,255,255,0.07)', padding: '16px', backgroundColor: 'rgba(255,255,255,0.03)', position: 'relative', transition: 'all 0.25s ease' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <p style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.3)', fontWeight: 500 }}>حجوزات اليوم</p>
+              <span style={{ fontSize: '0.6rem', color: notifEnabled ? '#C9A55A' : 'rgba(255,255,255,0.2)', fontWeight: 600 }}>الإشعارات</span>
+              <button
+                onClick={toggleNotifications}
+                title={notifEnabled ? 'إيقاف الإشعارات' : 'تشغيل الإشعارات'}
+                style={{
+                  width: 36, height: 20, borderRadius: 10, border: 'none', cursor: 'pointer',
+                  backgroundColor: notifEnabled ? '#C9A55A' : 'rgba(255,255,255,0.1)',
+                  position: 'relative', transition: 'background 0.2s', flexShrink: 0,
+                }}
+              >
+                <span style={{
+                  position: 'absolute', top: 2,
+                  right: notifEnabled ? 2 : 18,
+                  width: 16, height: 16, borderRadius: '50%',
+                  backgroundColor: '#fff',
+                  transition: 'right 0.2s',
+                  display: 'block',
+                }} />
+              </button>
+            </div>
+            <p style={{ fontSize: '2.2rem', fontWeight: 900, color: '#fff', lineHeight: 1, letterSpacing: '-0.03em' }}>{todayBookings.length}</p>
+          </div>
+          <div style={{ borderRadius: 20, border: '1px solid rgba(201,165,90,0.2)', padding: '16px', backgroundColor: 'rgba(201,165,90,0.05)', position: 'relative', overflow: 'hidden', transition: 'all 0.25s ease' }}>
+            <div style={{ position: 'absolute', top: 0, left: '15%', right: '15%', height: 1, background: 'linear-gradient(90deg,transparent,rgba(201,165,90,0.6),transparent)' }} />
+            <p style={{ fontSize: '0.68rem', color: 'rgba(201,165,90,0.5)', fontWeight: 500, marginBottom: 8 }}>إيرادات اليوم</p>
+            <p style={{ fontSize: '2.2rem', fontWeight: 900, lineHeight: 1, letterSpacing: '-0.03em', background: 'linear-gradient(120deg,#e8c97a 0%,#C9A55A 50%,#9a6f2a 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{todayRevenue}</p>
+            <p style={{ fontSize: '0.65rem', color: 'rgba(201,165,90,0.35)', marginTop: 4 }}>ر.س</p>
+          </div>
         </div>
-      </div>
 
-      {/* Monthly calendar */}
-      <div>
-        <h2 className="text-sm font-semibold text-gray-500 mb-3 px-1">التقويم الشهري</h2>
-        <MonthCalendar
-          year={now.getFullYear()}
-          month={now.getMonth()}
-          bookings={monthBookings}
-          selectedDay={selectedDay}
-          onSelectDay={setSelectedDay}
-        />
-      </div>
+        {/* Monthly calendar */}
+        <div>
+          <p style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.25)', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>التقويم الشهري</p>
+          <MonthCalendar year={now.getFullYear()} month={now.getMonth()} bookings={monthBookings} selectedDay={selectedDay} onSelectDay={setSelectedDay} />
+        </div>
 
-      {/* Selected day bookings */}
-      <div>
-        <h2 className="text-sm font-semibold text-gray-500 mb-3 px-1">
-          حجوزات {selectedDay} {ARABIC_MONTHS[now.getMonth()]}
-        </h2>
-        {selectedDayBookings.length === 0 ? (
-          <div className="rounded-2xl border border-white/10 p-6 text-center" style={{ backgroundColor: '#242424' }}>
-            <p className="text-gray-500 text-sm">لا توجد حجوزات في هذا اليوم</p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {groupByBarber(selectedDayBookings).map(({ id: barberId, name, bookings: bList }) => {
-              const now2 = new Date()
-              const completed = bList.filter(b => new Date(b.ends_at) < now2).length
-              const pending = bList.filter(b => new Date(b.ends_at) >= now2).length
-              const dateParam = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(selectedDay).padStart(2, '0')}`
-              return (
-                <Link
-                  key={barberId ?? name}
-                  href={barberId ? `/dashboard/bookings/${barberId}?date=${dateParam}` : '#'}
-                  className="rounded-2xl border border-white/10 p-4 flex items-center justify-between block"
-                  style={{ backgroundColor: '#242424' }}
-                >
-                  <p className="font-semibold text-white text-sm">{name}</p>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-green-900/40 text-green-400">{completed} منجز</span>
-                    <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-yellow-900/40 text-yellow-400">{pending} قيد الانتظار</span>
-                  </div>
-                </Link>
-              )
-            })}
-          </div>
-        )}
-      </div>
+        {/* All bookings DB button */}
+        <Link href="/dashboard/bookings-db" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 16, border: '1px solid rgba(201,165,90,0.3)', padding: '13px 16px', backgroundColor: 'rgba(201,165,90,0.06)', textDecoration: 'none', color: '#C9A55A', fontWeight: 700, fontSize: '0.85rem', transition: 'all 0.2s ease' }}>
+          <span>🗂️</span>
+          <span>جميع الحجوزات — قاعدة البيانات</span>
+        </Link>
 
+        {/* Selected day bookings */}
+        <div>
+          <p style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.25)', fontWeight: 600, letterSpacing: '0.08em', marginBottom: 8 }}>
+            حجوزات {selectedDay} {ARABIC_MONTHS[now.getMonth()]}
+          </p>
+          {selectedDayBookings.length === 0 ? (
+            <div style={{ borderRadius: 16, border: '1px solid rgba(255,255,255,0.06)', padding: '32px 16px', textAlign: 'center', backgroundColor: 'rgba(255,255,255,0.02)' }}>
+              <p style={{ color: 'rgba(255,255,255,0.2)', fontSize: '0.85rem' }}>لا توجد حجوزات</p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {groupByBarber(selectedDayBookings).map(({ id: barberId, name, bookings: bList }) => {
+                const now2 = new Date()
+                const completed = bList.filter(b => new Date(b.ends_at) < now2).length
+                const pending = bList.filter(b => new Date(b.ends_at) >= now2).length
+                const dateParam = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(selectedDay).padStart(2, '0')}`
+                return (
+                  <Link key={barberId ?? name} href={barberId ? `/dashboard/bookings/${barberId}?date=${dateParam}` : '#'}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: 16, border: '1px solid rgba(255,255,255,0.07)', padding: '12px 14px', backgroundColor: 'rgba(255,255,255,0.03)', textDecoration: 'none', transition: 'all 0.2s ease' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(201,165,90,0.1)', border: '1px solid rgba(201,165,90,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700, color: '#C9A55A', flexShrink: 0 }}>
+                        {name.charAt(0)}
+                      </div>
+                      <p style={{ fontWeight: 700, color: '#fff', fontSize: '0.85rem', margin: 0 }}>{name}</p>
+                    </div>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <span style={{ fontSize: '0.7rem', padding: '2px 9px', borderRadius: 20, fontWeight: 600, backgroundColor: 'rgba(34,197,94,0.1)', color: '#4ade80', border: '1px solid rgba(34,197,94,0.2)' }}>{completed} منجز</span>
+                      <span style={{ fontSize: '0.7rem', padding: '2px 9px', borderRadius: 20, fontWeight: 600, backgroundColor: 'rgba(234,179,8,0.1)', color: '#facc15', border: '1px solid rgba(234,179,8,0.2)' }}>{pending} انتظار</span>
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
+      </div>
     </div>
   )
 }

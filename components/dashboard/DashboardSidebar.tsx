@@ -1,8 +1,11 @@
 'use client'
 
 import Link from 'next/link'
+import { useEffect, useRef, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import SalonLogo from '@/app/components/SalonLogo'
+import { getTabSalonId, setTabSalonId } from '@/lib/tabSalonId'
 
 // ── Icons ────────────────────────────────────────────────────
 
@@ -90,7 +93,6 @@ const NAV = [
   { href: '/dashboard/bookings',      label: 'الحجوزات',   icon: <IconCalendar /> },
   { href: '/dashboard/stats',         label: 'الإحصائيات', icon: <IconChart /> },
   { href: '/dashboard/services',      label: 'الخدمات',    icon: <IconScissors /> },
-  { href: '/dashboard/subscriptions', label: 'الاشتراكات', icon: <IconCard /> },
   { href: '/dashboard/settings',      label: 'الإعدادات',  icon: <IconSettings /> },
 ]
 
@@ -99,6 +101,56 @@ const NAV = [
 export default function DashboardSidebar() {
   const pathname = usePathname()
   const router = useRouter()
+
+  const [meta, setMeta] = useState<{ logo_url?: string; use_auto_logo?: boolean; logo_letter?: string; card_theme?: string; custom_color?: string } | null>(null)
+  const [unread, setUnread] = useState(0)
+
+  // Load from localStorage after mount to avoid hydration mismatch
+  useEffect(() => {
+    setUnread(parseInt(localStorage.getItem('unread_bookings') ?? '0', 10))
+  }, [])
+
+  // Reset badge when visiting bookings
+  useEffect(() => {
+    if (pathname.startsWith('/dashboard/bookings')) {
+      setUnread(0)
+      localStorage.setItem('unread_bookings', '0')
+    }
+  }, [pathname])
+
+  // Listen for new booking messages from SW
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return
+    const handler = (e: MessageEvent) => {
+      if (e.data?.type === 'NEW_BOOKING') {
+        setUnread(prev => {
+          const next = prev + 1
+          localStorage.setItem('unread_bookings', String(next))
+          return next
+        })
+      }
+    }
+    navigator.serviceWorker.addEventListener('message', handler)
+    return () => navigator.serviceWorker.removeEventListener('message', handler)
+  }, [])
+
+  useEffect(() => {
+    const supabase = createClient()
+    async function loadMeta() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      let sid = getTabSalonId() ?? (user.app_metadata?.salon_id as string | undefined) ?? null
+      if (!sid) {
+        const res = await fetch('/api/dashboard/fix-salon-metadata', { method: 'POST' })
+        if (res.ok) { const j = await res.json(); sid = j.salon_id ?? null }
+      }
+      if (sid) setTabSalonId(sid)
+      if (!sid) return
+      const { data } = await supabase.from('salons').select('meta').eq('id', sid).single()
+      setMeta((data as any)?.meta ?? {})
+    }
+    loadMeta()
+  }, [])
 
   async function handleLogout() {
     const supabase = createClient()
@@ -127,8 +179,8 @@ export default function DashboardSidebar() {
     <>
       {/* ── Desktop sidebar ──────────────────────────────── */}
       <aside className="hidden md:flex flex-col fixed top-0 right-0 h-full w-60 border-l border-white/10 z-20" style={{ backgroundColor: '#242424' }}>
-        <div className="px-6 py-5 border-b border-white/10">
-          <h1 className="text-base font-bold" style={{ color: '#D4A843' }}>لوحة التحكم</h1>
+        <div className="px-6 py-5 border-b border-white/10 flex items-center">
+          <h1 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#D4A843', letterSpacing: '0.06em' }}>لوحة التحكم</h1>
         </div>
 
         <nav className="flex-1 px-3 py-4 space-y-1">
@@ -143,7 +195,12 @@ export default function DashboardSidebar() {
               style={isActive(item.href) ? { backgroundColor: '#D4A843', color: '#1a1a1a' } : undefined}
             >
               {item.icon}
-              {item.label}
+              <span className="flex-1">{item.label}</span>
+              {item.href === '/dashboard/bookings' && unread > 0 && (
+                <span style={{ backgroundColor: '#ef4444', color: '#fff', borderRadius: '999px', fontSize: '0.65rem', fontWeight: 700, minWidth: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px' }}>
+                  {unread > 99 ? '99+' : unread}
+                </span>
+              )}
             </Link>
           ))}
         </nav>
@@ -165,11 +222,16 @@ export default function DashboardSidebar() {
           <Link
             key={item.href}
             href={item.href}
-            className="flex-1 flex flex-col items-center justify-center py-3 gap-0.5 transition-colors"
+            className="flex-1 flex flex-col items-center justify-center py-3 gap-0.5 transition-colors relative"
             style={{ color: isActive(item.href) ? '#D4A843' : '#6b7280' }}
           >
             {item.icon}
             <span className="text-xs font-medium">{item.label}</span>
+            {item.href === '/dashboard/bookings' && unread > 0 && (
+              <span style={{ position: 'absolute', top: 6, right: '50%', transform: 'translateX(10px)', backgroundColor: '#ef4444', color: '#fff', borderRadius: '999px', fontSize: '0.55rem', fontWeight: 700, minWidth: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>
+                {unread > 99 ? '99+' : unread}
+              </span>
+            )}
           </Link>
         ))}
         <button

@@ -3,7 +3,9 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { getTabSalonId, setTabSalonId } from '@/lib/tabSalonId'
 import { Cairo } from 'next/font/google'
+import { THEMES, ThemeKey } from '@/app/lib/themes'
 
 const cairo = Cairo({ subsets: ['arabic'], display: 'swap' })
 
@@ -22,7 +24,7 @@ interface Salon {
   id: string
   name: string
   whatsapp_number: string | null
-  meta?: { hero_title?: string; tagline?: string; neighborhood?: string; hero_image?: string; feature_image?: string; map_place_url?: string; map_embed_url?: string; card_theme?: string; custom_color?: string } | null
+  meta?: { hero_title?: string; tagline?: string; neighborhood?: string; hero_image?: string; feature_image?: string; map_place_url?: string; map_embed_url?: string; card_theme?: string; custom_color?: string; features?: { title: string; description: string }[]; features_title?: string; features_subtitle?: string; about_title?: string; about_description?: string; years_experience?: number; rating?: number; happy_clients?: number; reviews_title?: string; reviews_subtitle?: string; reviews?: { name: string; text: string }[] } | null
 }
 
 interface WorkingHours {
@@ -67,7 +69,7 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
   return (
     <button type="button" onClick={() => onChange(!value)}
       className="relative w-10 h-5 rounded-full transition-colors shrink-0"
-      style={{ backgroundColor: value ? '#D4A843' : '#374151' }}>
+      style={{ backgroundColor: value ? '#C9A55A' : 'rgba(255,255,255,0.1)' }}>
       <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${value ? 'translate-x-5' : 'translate-x-0.5'}`} />
     </button>
   )
@@ -75,15 +77,15 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
 
 // ── Input style ───────────────────────────────────────────────
 
-const inputCls = 'w-full rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 border border-white/10 bg-[#1a1a1a] focus:ring-[#D4A843]'
+const inputCls = 'w-full rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 border border-white/10 bg-[#1a1a1a] focus:ring-[#C9A55A]'
 
 // ── Section wrapper ───────────────────────────────────────────
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-white/10 overflow-hidden" style={{ backgroundColor: '#242424' }}>
+    <div className="rounded-2xl border border-white/10 overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
       <div className="px-4 py-3 border-b border-white/10">
-        <h2 className="text-sm font-semibold" style={{ color: '#D4A843' }}>{title}</h2>
+        <h2 className="text-sm font-semibold" style={{ color: '#C9A55A' }}>{title}</h2>
       </div>
       <div className="p-4">{children}</div>
     </div>
@@ -118,15 +120,57 @@ export default function SettingsPage() {
   const [newBarberName, setNewBarberName] = useState('')
   const [savingNewBarber, setSavingNewBarber] = useState(false)
 
-  const [metaForm, setMetaForm] = useState({ hero_title: '', tagline: '', neighborhood: '', hero_image: '', feature_image: '', map_place_url: '', map_embed_url: '' })
+  const [metaForm, setMetaForm] = useState({ hero_title: '', tagline: '', booking_button_hero_text: '', neighborhood: '', hero_image: '', feature_image: '', map_place_url: '', map_embed_url: '' })
   const [metaEditing, setMetaEditing] = useState(false)
   const [savingMeta, setSavingMeta] = useState(false)
   const [uploadingImage, setUploadingImage] = useState(false)
   const [uploadingFeatureImage, setUploadingFeatureImage] = useState(false)
 
+  const [features, setFeatures] = useState<{ title: string; description: string }[]>([
+    { title: '', description: '' }, { title: '', description: '' },
+    { title: '', description: '' }, { title: '', description: '' },
+  ])
+  const [featuresTitle, setFeaturesTitle] = useState('')
+  const [featuresSubtitle, setFeaturesSubtitle] = useState('')
+  const [savingFeatures, setSavingFeatures] = useState(false)
+
+  const [reviewsTitle, setReviewsTitle] = useState('')
+  const [reviewsSubtitle, setReviewsSubtitle] = useState('')
+  const [reviews, setReviews] = useState<{ name: string; text: string }[]>([])
+  const [reviewForm, setReviewForm] = useState({ name: '', text: '' })
+  const [savingReviews, setSavingReviews] = useState(false)
+
+  const [aboutTitle, setAboutTitle] = useState('')
+  const [aboutDescription, setAboutDescription] = useState('')
+  const [yearsExperience, setYearsExperience] = useState('')
+  const [rating, setRating] = useState('')
+  const [happyClients, setHappyClients] = useState('')
+  const [savingAbout, setSavingAbout] = useState(false)
+
+  const [bookingHeroTitle, setBookingHeroTitle] = useState('')
+  const [bookingHeroDescription, setBookingHeroDescription] = useState('')
+  const [bookingCardTitle, setBookingCardTitle] = useState('')
+  const [bookingCardSubtitle, setBookingCardSubtitle] = useState('')
+  const [bookingStep1, setBookingStep1] = useState('')
+  const [bookingStep2, setBookingStep2] = useState('')
+  const [bookingStep3, setBookingStep3] = useState('')
+  const [bookingButtonText, setBookingButtonText] = useState('')
+  const [logoUrl, setLogoUrl] = useState('')
+  const [uploadingLogo, setUploadingLogo] = useState(false)
+  const [deletingLogo, setDeletingLogo] = useState(false)
+  const [useAutoLogo, setUseAutoLogo] = useState(false)
+  const [logoLetter, setLogoLetter] = useState('')
+  const [savingAutoLogo, setSavingAutoLogo] = useState(false)
+  const [savingBookingHero, setSavingBookingHero] = useState(false)
+
   const [cardTheme, setCardTheme] = useState<string>('gold')
   const [customColor, setCustomColor] = useState<string>('#FFAA00')
   const [savingTheme, setSavingTheme] = useState(false)
+
+  const [pageTheme, setPageTheme] = useState<string>('gold')
+  const [pagePrimaryColor, setPagePrimaryColor] = useState<string>('#D4AF37')
+  const [pageBgColor, setPageBgColor] = useState<string>('#0f0f0f')
+  const [savingPageTheme, setSavingPageTheme] = useState(false)
 
   const [salonSlug, setSalonSlug] = useState<string | null>(null)
 
@@ -138,18 +182,19 @@ export default function SettingsPage() {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) { router.push('/dashboard/login'); return }
 
-        const { data: member, error: memberError } = await supabase
-          .from('salon_members')
-          .select('salon_id')
-          .eq('user_id', user.id)
-          .single()
-
-        if (memberError || !member?.salon_id) {
+        let sid = getTabSalonId()
+        if (!sid) {
+          sid = (user.app_metadata?.salon_id as string | undefined) ?? null
+        }
+        if (!sid) {
+          const res = await fetch('/api/dashboard/fix-salon-metadata', { method: 'POST' })
+          if (res.ok) { const j = await res.json(); sid = j.salon_id ?? null }
+        }
+        if (sid) setTabSalonId(sid)
+        if (!sid) {
           setError('تعذّر تحديد الصالون المرتبط بهذا الحساب')
           return
         }
-
-        const sid = member.salon_id
         setSalonId(sid)
         await Promise.all([loadSalon(sid), loadHours(sid), loadBarbers(sid)])
       } catch {
@@ -173,9 +218,37 @@ export default function SettingsPage() {
     // Load meta separately — column may not exist yet
     const { data: metaRow } = await supabase.from('salons').select('meta').eq('id', sid).single()
     const m = (metaRow as any)?.meta ?? {}
-    setMetaForm({ hero_title: m.hero_title ?? '', tagline: m.tagline ?? '', neighborhood: m.neighborhood ?? '', hero_image: m.hero_image ?? '', feature_image: m.feature_image ?? '', map_place_url: m.map_place_url ?? '', map_embed_url: m.map_embed_url ?? '' })
+    setMetaForm({ hero_title: m.hero_title ?? '', tagline: m.tagline ?? '', booking_button_hero_text: m.booking_button_hero_text ?? '', neighborhood: m.neighborhood ?? '', hero_image: m.hero_image ?? '', feature_image: m.feature_image ?? '', map_place_url: m.map_place_url ?? '', map_embed_url: m.map_embed_url ?? '' })
     setCardTheme(m.card_theme ?? 'gold')
+    setReviewsTitle(m.reviews_title ?? '')
+    setReviewsSubtitle(m.reviews_subtitle ?? '')
+    setReviews(m.reviews ?? [])
+    setAboutTitle(m.about_title ?? '')
+    setAboutDescription(m.about_description ?? '')
+    setYearsExperience(m.years_experience != null ? String(m.years_experience) : '')
+    setRating(m.rating != null ? String(m.rating) : '')
+    setHappyClients(m.happy_clients != null ? String(m.happy_clients) : '')
+    setFeaturesTitle(m.features_title ?? '')
+    setFeaturesSubtitle(m.features_subtitle ?? '')
+    if (m.features?.length) {
+      const padded = [...m.features, { title: '', description: '' }, { title: '', description: '' }, { title: '', description: '' }, { title: '', description: '' }].slice(0, 4)
+      setFeatures(padded)
+    }
+    setBookingHeroTitle(m.booking_hero_title ?? '')
+    setBookingHeroDescription(m.booking_hero_description ?? '')
+    setBookingCardTitle(m.booking_card_title ?? '')
+    setBookingCardSubtitle(m.booking_card_subtitle ?? '')
+    setBookingStep1(m.booking_step1 ?? '')
+    setBookingStep2(m.booking_step2 ?? '')
+    setBookingStep3(m.booking_step3 ?? '')
+    setBookingButtonText(m.booking_button_text ?? '')
+    setLogoUrl(m.logo_url ?? '')
+    setUseAutoLogo(m.use_auto_logo ?? false)
+    setLogoLetter(m.logo_letter ?? '')
     setCustomColor(m.custom_color ?? '#FFAA00')
+    setPageTheme(m.page_theme ?? 'gold')
+    setPagePrimaryColor(m.page_primary_color ?? '#D4AF37')
+    setPageBgColor(m.page_bg_color ?? '#0f0f0f')
   }
 
   function startEditSalon() {
@@ -271,6 +344,7 @@ export default function SettingsPage() {
       ...existingMeta,
       hero_title: metaForm.hero_title.trim(),
       tagline: metaForm.tagline.trim(),
+      booking_button_hero_text: metaForm.booking_button_hero_text.trim(),
       neighborhood: metaForm.neighborhood.trim(),
       hero_image: metaForm.hero_image.trim(),
       feature_image: metaForm.feature_image.trim(),
@@ -288,7 +362,7 @@ export default function SettingsPage() {
   }
 
   async function loadBarbers(sid: string | null) {
-    let q = supabase.from('barbers').select('id, name, is_available').order('name')
+    let q = supabase.from('barbers').select('id, name, is_available').eq('is_deleted', false).order('name')
     if (sid) q = q.eq('salon_id', sid)
     const { data } = await q
     setBarbers(data ?? [])
@@ -310,8 +384,8 @@ export default function SettingsPage() {
   }
 
   async function deleteBarber(id: string) {
-    const { error: e } = await supabase.from('barbers').delete().eq('id', id)
-    if (!e) { setBarbers(prev => prev.filter(b => b.id !== id)); setDeletingBarberId(null) }
+    const res = await fetch(`/api/dashboard/barbers?id=${id}`, { method: 'DELETE' })
+    if (res.ok) { setBarbers(prev => prev.filter(b => b.id !== id)); setDeletingBarberId(null) }
   }
 
   async function saveNewBarber() {
@@ -345,21 +419,211 @@ export default function SettingsPage() {
     setSavingTheme(false)
   }
 
+  async function saveReviews() {
+    if (!salonId) return
+    setSavingReviews(true)
+    const { data: current } = await supabase.from('salons').select('meta').eq('id', salonId).single()
+    const existingMeta = (current as any)?.meta ?? {}
+    const { error: e } = await supabase.from('salons').update({ meta: { ...existingMeta, reviews_title: reviewsTitle.trim(), reviews_subtitle: reviewsSubtitle.trim(), reviews } }).eq('id', salonId)
+    if (e) setError('تعذّر حفظ قسم التقييمات: ' + e.message)
+    setSavingReviews(false)
+  }
+
+  async function saveAbout() {
+    if (!salonId) return
+    setSavingAbout(true)
+    const { data: current } = await supabase.from('salons').select('meta').eq('id', salonId).single()
+    const existingMeta = (current as any)?.meta ?? {}
+    const { error: e } = await supabase.from('salons').update({ meta: { ...existingMeta, about_title: aboutTitle.trim(), about_description: aboutDescription.trim(), years_experience: yearsExperience !== '' ? Number(yearsExperience) : undefined, rating: rating !== '' ? Number(rating) : undefined, happy_clients: happyClients !== '' ? Number(happyClients) : undefined } }).eq('id', salonId)
+    if (e) setError('تعذّر حفظ قسم من نحن: ' + e.message)
+    setSavingAbout(false)
+  }
+
+  async function saveAutoLogo(newUseAutoLogo: boolean, newLogoLetter: string) {
+    const id = salonId ?? salon?.id ?? null
+    if (!id) return
+    setSavingAutoLogo(true)
+    const { data: current } = await supabase.from('salons').select('meta').eq('id', id).single()
+    const existingMeta = (current as any)?.meta ?? {}
+    const { error: e } = await supabase.from('salons').update({ meta: { ...existingMeta, use_auto_logo: newUseAutoLogo, logo_letter: newLogoLetter.trim() } }).eq('id', id)
+    if (e) setError('تعذّر حفظ إعدادات الشعار: ' + e.message)
+    setSavingAutoLogo(false)
+  }
+
+  async function deleteLogo() {
+    const id = salonId ?? salon?.id ?? null
+    if (!id || !logoUrl) return
+    setDeletingLogo(true)
+    const path = logoUrl.split('/salon-images/').pop()
+    if (path) await supabase.storage.from('salon-images').remove([path])
+    const { data: current } = await supabase.from('salons').select('meta').eq('id', id).single()
+    const existingMeta = (current as any)?.meta ?? {}
+    const { error: e } = await supabase.from('salons').update({ meta: { ...existingMeta, logo_url: null } }).eq('id', id)
+    if (e) setError('تعذّر حذف الشعار: ' + e.message)
+    else setLogoUrl('')
+    setDeletingLogo(false)
+  }
+
+  async function uploadLogo(file: File) {
+    const id = salonId ?? salon?.id ?? null
+    if (!id) return
+    setUploadingLogo(true)
+    const ext = file.name.split('.').pop()
+    const path = `${id}/logo.${ext}`
+    const { error: upErr } = await supabase.storage.from('salon-images').upload(path, file, { upsert: true })
+    if (upErr) { setError('تعذّر رفع الشعار: ' + upErr.message); setUploadingLogo(false); return }
+    const { data: urlData } = supabase.storage.from('salon-images').getPublicUrl(path)
+    const url = `${urlData.publicUrl}?t=${Date.now()}`
+    const { data: current } = await supabase.from('salons').select('meta').eq('id', id).single()
+    const existingMeta = (current as any)?.meta ?? {}
+    await supabase.from('salons').update({ meta: { ...existingMeta, logo_url: url } }).eq('id', id)
+    setLogoUrl(url)
+    setUploadingLogo(false)
+  }
+
+  async function saveBookingHero() {
+    if (!salonId) return
+    setSavingBookingHero(true)
+    const { data: current } = await supabase.from('salons').select('meta').eq('id', salonId).single()
+    const existingMeta = (current as any)?.meta ?? {}
+    const { error: e } = await supabase.from('salons').update({ meta: { ...existingMeta, booking_hero_title: bookingHeroTitle.trim(), booking_hero_description: bookingHeroDescription.trim(), booking_card_title: bookingCardTitle.trim(), booking_card_subtitle: bookingCardSubtitle.trim(), booking_step1: bookingStep1.trim(), booking_step2: bookingStep2.trim(), booking_step3: bookingStep3.trim(), booking_button_text: bookingButtonText.trim() } }).eq('id', salonId)
+    if (e) setError('تعذّر حفظ قسم الحجز: ' + e.message)
+    setSavingBookingHero(false)
+  }
+
+  async function saveFeatures() {
+    if (!salonId) return
+    setSavingFeatures(true)
+    const { data: current } = await supabase.from('salons').select('meta').eq('id', salonId).single()
+    const existingMeta = (current as any)?.meta ?? {}
+    const filled = features.filter(f => f.title.trim() || f.description.trim())
+    const { error: e } = await supabase.from('salons').update({ meta: { ...existingMeta, features: filled, features_title: featuresTitle.trim(), features_subtitle: featuresSubtitle.trim() } }).eq('id', salonId)
+    if (e) setError('تعذّر حفظ المميزات: ' + e.message)
+    setSavingFeatures(false)
+  }
+
+  async function savePageTheme() {
+    if (!salonId) return
+    setSavingPageTheme(true)
+    const { data: current } = await supabase.from('salons').select('meta').eq('id', salonId).single()
+    const existingMeta = (current as any)?.meta ?? {}
+    const update: Record<string, string> = { page_theme: pageTheme }
+    if (pageTheme === 'custom') {
+      update.page_primary_color = pagePrimaryColor
+      update.page_bg_color = pageBgColor
+    }
+    const { error: e } = await supabase.from('salons').update({ meta: { ...existingMeta, ...update } }).eq('id', salonId)
+    if (e) setError('تعذّر حفظ الثيم: ' + e.message)
+    setSavingPageTheme(false)
+  }
+
   if (loading) {
     return (
-      <div dir="rtl" className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#1a1a1a' }}>
+      <div dir="rtl" className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#0a0a0c' }}>
         <p className="text-sm text-gray-500">جارٍ التحميل...</p>
       </div>
     )
   }
 
   return (
-    <div dir="rtl" className={`min-h-screen ${cairo.className}`} style={{ backgroundColor: '#1a1a1a' }}>
+    <div dir="rtl" className={`min-h-screen ${cairo.className}`} style={{ backgroundColor: '#0a0a0c' }}>
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
 
-        <h1 className="text-lg font-bold text-white">الإعدادات</h1>
+        <div>
+          <h1 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fff', margin: 0, letterSpacing: '-0.02em' }}>الإعدادات</h1>
+          <p style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.28)', marginTop: 2 }}>إدارة الصالون والتخصيصات</p>
+        </div>
 
         {error && <div className="rounded-xl px-4 py-3 text-sm text-red-400 border border-red-900/40 bg-red-900/20">{error}</div>}
+
+        {/* Page Theme */}
+        <Section title="الثيم العام">
+          <div className="space-y-4">
+            <div className="flex flex-wrap gap-3">
+              {([
+                { key: 'gold',  color: '#D4AF37', label: 'ذهبي' },
+                { key: 'white', color: '#c8a96e', label: 'فاتح', bg: '#f9f9f9' },
+                { key: 'gray',  color: '#9CA3AF', label: 'رمادي' },
+                { key: 'blue',  color: '#3B82F6', label: 'أزرق' },
+                { key: 'pink',  color: '#E879A0', label: 'وردي' },
+                { key: 'custom', color: pagePrimaryColor, label: 'مخصص' },
+              ] as { key: string; color: string; label: string; bg?: string }[]).map(t => (
+                <button
+                  key={t.key}
+                  type="button"
+                  onClick={() => setPageTheme(t.key)}
+                  className="flex flex-col items-center gap-1.5"
+                >
+                  <span
+                    className="flex h-9 w-9 rounded-full border-2 transition-all"
+                    style={{
+                      backgroundColor: t.color,
+                      borderColor: pageTheme === t.key ? '#fff' : 'transparent',
+                      boxShadow: pageTheme === t.key ? `0 0 0 3px ${t.color}55` : 'none',
+                    }}
+                  />
+                  <span className="text-[10px] text-gray-400">{t.label}</span>
+                </button>
+              ))}
+            </div>
+
+            {pageTheme === 'custom' && (
+              <div className="flex flex-wrap gap-4 pt-1">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">اللون الرئيسي</label>
+                  <input type="color" value={pagePrimaryColor} onChange={e => setPagePrimaryColor(e.target.value)}
+                    className="h-9 w-16 cursor-pointer rounded-lg border border-white/10 bg-transparent p-0.5" />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">لون الخلفية</label>
+                  <input type="color" value={pageBgColor} onChange={e => setPageBgColor(e.target.value)}
+                    className="h-9 w-16 cursor-pointer rounded-lg border border-white/10 bg-transparent p-0.5" />
+                </div>
+              </div>
+            )}
+
+            {/* Live preview */}
+            {(() => {
+              const preview = pageTheme === 'custom'
+                ? { primary: pagePrimaryColor, bg: pageBgColor, cardBg: 'rgba(255,255,255,0.06)', text: '#ffffff', textMuted: 'rgba(255,255,255,0.5)', border: `${pagePrimaryColor}33` }
+                : (THEMES[(pageTheme as ThemeKey)] ?? THEMES.gold)
+              const hex = preview.primary.replace('#', '')
+              const isLight = hex.match(/^[0-9a-fA-F]{6}$/)
+                ? (0.299 * parseInt(hex.slice(0,2),16) + 0.587 * parseInt(hex.slice(2,4),16) + 0.114 * parseInt(hex.slice(4,6),16)) / 255 > 0.55
+                : true
+              const btnText = isLight ? '#000' : '#fff'
+              return (
+                <div className="rounded-xl overflow-hidden border border-white/10" style={{ background: preview.bg }}>
+                  <div className="px-3 py-1.5 border-b border-white/10">
+                    <span className="text-[10px] text-gray-500 uppercase tracking-widest">معاينة</span>
+                  </div>
+                  <div className="p-4 flex flex-col gap-3">
+                    {/* Sample card */}
+                    <div className="rounded-xl p-3 border" style={{ background: preview.cardBg, borderColor: preview.border }}>
+                      <div className="text-xs font-bold mb-1" style={{ color: preview.text }}>اسم الخدمة</div>
+                      <div className="text-[11px]" style={{ color: preview.textMuted }}>وصف مختصر للخدمة أو العرض</div>
+                      <div className="mt-1.5 text-sm font-extrabold" style={{ color: preview.primary }}>120 ر.س</div>
+                    </div>
+                    {/* Sample button */}
+                    <button type="button" className="rounded-xl px-4 py-2 text-sm font-bold w-full" style={{ background: preview.primary, color: btnText }}>
+                      احجز الآن
+                    </button>
+                  </div>
+                </div>
+              )
+            })()}
+
+            <button
+              type="button"
+              onClick={savePageTheme}
+              disabled={savingPageTheme}
+              className="rounded-xl px-5 py-2 text-sm font-semibold text-black disabled:opacity-60"
+              style={{ background: 'linear-gradient(135deg,#e8c97a,#C9A55A)', color: '#1a0f00' }}
+            >
+              {savingPageTheme ? 'جارٍ الحفظ...' : 'حفظ الثيم'}
+            </button>
+          </div>
+        </Section>
 
         {/* Salon info */}
         <Section title="معلومات الصالون">
@@ -472,6 +736,11 @@ export default function SettingsPage() {
                   placeholder="مثال: أفضل صالون في الحي" className={inputCls} />
               </div>
               <div>
+                <label className="block text-xs text-gray-500 mb-1">نص زر الحجز الرئيسي</label>
+                <input value={metaForm.booking_button_hero_text} onChange={e => setMetaForm(f => ({ ...f, booking_button_hero_text: e.target.value }))}
+                  placeholder="احجز موعدك الآن" className={inputCls} />
+              </div>
+              <div>
                 <label className="block text-xs text-gray-500 mb-1">الحي</label>
                 <input value={metaForm.neighborhood} onChange={e => setMetaForm(f => ({ ...f, neighborhood: e.target.value }))}
                   placeholder="مثال: حي النزهة" className={inputCls} />
@@ -480,7 +749,7 @@ export default function SettingsPage() {
                 <label className="block text-xs text-gray-500 mb-1">صورة الغلاف</label>
                 <label className="flex items-center gap-3 cursor-pointer">
                   <span className="px-4 py-2 text-sm rounded-xl border border-white/10 text-gray-300 hover:bg-white/5 transition-colors"
-                    style={{ backgroundColor: '#1a1a1a' }}>
+                    style={{ backgroundColor: '#0a0a0c' }}>
                     {uploadingImage ? 'جارٍ الرفع...' : 'اختر صورة'}
                   </span>
                   {metaForm.hero_image && !uploadingImage && (
@@ -495,7 +764,7 @@ export default function SettingsPage() {
                 <label className="block text-xs text-gray-500 mb-1">صورة القسم المميز</label>
                 <label className="flex items-center gap-3 cursor-pointer">
                   <span className="px-4 py-2 text-sm rounded-xl border border-white/10 text-gray-300 hover:bg-white/5 transition-colors"
-                    style={{ backgroundColor: '#1a1a1a' }}>
+                    style={{ backgroundColor: '#0a0a0c' }}>
                     {uploadingFeatureImage ? 'جارٍ الرفع...' : 'اختر صورة'}
                   </span>
                   {metaForm.feature_image && !uploadingFeatureImage && (
@@ -560,13 +829,13 @@ export default function SettingsPage() {
         </Section>
 
         {/* Barbers */}
-        <Section title="الحلاقون">
+        <Section title="الموظفين">
           <div className="space-y-2">
             {addingBarber && (
               <div className="flex items-center gap-2 pb-2 border-b border-white/10 mb-3">
                 <input autoFocus value={newBarberName} onChange={e => setNewBarberName(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && saveNewBarber()} placeholder="اسم الحلاق"
-                  className="flex-1 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 border border-white/10 bg-[#1a1a1a] focus:ring-[#D4A843]" />
+                  className="flex-1 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 border border-white/10 bg-[#1a1a1a] focus:ring-[#C9A55A]" />
                 <button onClick={() => setAddingBarber(false)} className="px-3 py-2 text-sm text-gray-500 hover:text-gray-300">إلغاء</button>
                 <button onClick={saveNewBarber} disabled={savingNewBarber || !newBarberName.trim()}
                   className="px-4 py-2 text-sm font-medium rounded-xl disabled:opacity-40 transition-colors"
@@ -586,7 +855,7 @@ export default function SettingsPage() {
                   <>
                     <input autoFocus value={editBarberName} onChange={e => setEditBarberName(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && saveBarberName(b.id)}
-                      className="flex-1 rounded-xl px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-1 border border-white/10 bg-[#1a1a1a] focus:ring-[#D4A843]" />
+                      className="flex-1 rounded-xl px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-1 border border-white/10 bg-[#1a1a1a] focus:ring-[#C9A55A]" />
                     <button onClick={() => setEditingBarberId(null)} className="text-xs text-gray-500 hover:text-gray-300 px-2">إلغاء</button>
                     <button onClick={() => saveBarberName(b.id)} disabled={savingBarberId === b.id || !editBarberName.trim()}
                       className="px-3 py-1.5 text-xs font-medium rounded-lg disabled:opacity-40 transition-colors"
@@ -629,59 +898,267 @@ export default function SettingsPage() {
           </div>
         </Section>
 
-        {/* Card Theme */}
-        <Section title="ثيم بطاقة العروض">
+        {/* Features */}
+        {/* About */}
+        <Section title="من نحن">
           <div className="space-y-3">
-            <p className="text-xs text-gray-500">اختر لون ثيم بطاقات العروض في صفحة الصالون</p>
-            <div className="grid grid-cols-4 gap-3">
-              {([
-                { key: 'gold',   label: 'ذهبي',   color: '#D4AF37' },
-                { key: 'blue',   label: 'أزرق',   color: '#3B82F6' },
-                { key: 'purple', label: 'بنفسجي', color: '#7C3AED' },
-              ] as const).map(t => (
-                <button
-                  key={t.key}
-                  onClick={() => saveCardTheme(t.key)}
-                  disabled={savingTheme}
-                  className={`relative flex flex-col items-center gap-2 rounded-2xl border p-4 transition-all duration-200 disabled:opacity-50 ${cardTheme === t.key ? 'border-white/30 bg-white/5' : 'border-white/8 hover:border-white/20 hover:bg-white/3'}`}
-                >
-                  <span className="w-8 h-8 rounded-full shrink-0 shadow-lg" style={{ backgroundColor: t.color, boxShadow: cardTheme === t.key ? `0 0 12px ${t.color}88` : undefined }} />
-                  <span className="text-xs text-gray-400">{t.label}</span>
-                  {cardTheme === t.key && (
-                    <span className="absolute top-2 left-2 w-2 h-2 rounded-full" style={{ backgroundColor: t.color }} />
-                  )}
-                </button>
-              ))}
-              {/* Custom color */}
-              <div className={`relative flex flex-col items-center gap-2 rounded-2xl border p-4 transition-all duration-200 ${cardTheme === 'custom' ? 'border-white/30 bg-white/5' : 'border-white/8'}`}>
-                <label className="cursor-pointer flex flex-col items-center gap-2 w-full">
-                  <span className="w-8 h-8 rounded-full shrink-0 shadow-lg border border-white/20 overflow-hidden" style={{ backgroundColor: customColor }}>
-                    <input type="color" value={customColor}
-                      onChange={e => setCustomColor(e.target.value)}
-                      onBlur={() => saveCardTheme('custom', customColor)}
-                      className="opacity-0 w-full h-full cursor-pointer" />
-                  </span>
-                  <span className="text-xs text-gray-400">مخصص</span>
-                </label>
-                {cardTheme === 'custom' && (
-                  <span className="absolute top-2 left-2 w-2 h-2 rounded-full" style={{ backgroundColor: customColor }} />
-                )}
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">عنوان القسم</label>
+              <input value={aboutTitle} onChange={e => setAboutTitle(e.target.value)}
+                placeholder="لماذا تختارنا" className={inputCls} />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">وصف القسم</label>
+              <textarea value={aboutDescription} onChange={e => setAboutDescription(e.target.value)}
+                placeholder="نص تعريفي..." rows={4}
+                className={inputCls + ' resize-none'} />
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">سنوات الخبرة</label>
+                <input type="number" min="0" value={yearsExperience} onChange={e => setYearsExperience(e.target.value)}
+                  placeholder="10" className={inputCls} />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">التقييم</label>
+                <input type="number" min="0" max="5" step="0.1" value={rating} onChange={e => setRating(e.target.value)}
+                  placeholder="4.9" className={inputCls} />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">عدد العملاء الراضين</label>
+                <input type="number" min="0" value={happyClients} onChange={e => setHappyClients(e.target.value)}
+                  placeholder="500" className={inputCls} />
               </div>
             </div>
-            {cardTheme === 'custom' && (
-              <button onClick={() => saveCardTheme('custom', customColor)} disabled={savingTheme}
-                className="w-full py-2 text-xs font-medium rounded-xl disabled:opacity-40 transition-colors"
+            <div className="flex justify-end pt-1">
+              <button onClick={saveAbout} disabled={savingAbout}
+                className="px-5 py-2 text-sm font-medium rounded-xl disabled:opacity-40 transition-colors"
                 style={{ backgroundColor: '#D4A843', color: '#1a1a1a' }}>
-                {savingTheme ? 'جارٍ الحفظ...' : 'حفظ اللون المخصص'}
+                {savingAbout ? 'جارٍ الحفظ...' : 'حفظ'}
               </button>
+            </div>
+          </div>
+        </Section>
+
+        <Section title="التقييمات">
+          <div className="space-y-3">
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">عنوان القسم</label>
+              <input value={reviewsTitle} onChange={e => setReviewsTitle(e.target.value)}
+                placeholder="مثال: التقييمات" className={inputCls} />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">النص التوضيحي</label>
+              <input value={reviewsSubtitle} onChange={e => setReviewsSubtitle(e.target.value)}
+                placeholder="مثال: آراء عملائنا تعكس مستوى الخدمة" className={inputCls} />
+            </div>
+            {reviews.length > 0 && (
+              <div className="space-y-2">
+                {reviews.map((r, i) => (
+                  <div key={i} className="flex items-start justify-between gap-2 rounded-xl border border-white/8 p-3" style={{ backgroundColor: '#0a0a0c' }}>
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium text-white/80 truncate">{r.name}</p>
+                      <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{r.text}</p>
+                    </div>
+                    <button onClick={() => setReviews(prev => prev.filter((_, j) => j !== i))}
+                      className="shrink-0 p-1 text-gray-600 hover:text-red-400 rounded-lg hover:bg-red-900/20 transition-colors">
+                      <IconTrash />
+                    </button>
+                  </div>
+                ))}
+              </div>
             )}
+            <div className="rounded-xl border border-white/8 p-3 space-y-2" style={{ backgroundColor: '#0a0a0c' }}>
+              <p className="text-xs text-gray-500">إضافة تقييم جديد</p>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">الاسم</label>
+                <input value={reviewForm.name} onChange={e => setReviewForm(f => ({ ...f, name: e.target.value }))}
+                  placeholder="مثال: أحمد العمري" className={inputCls} />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">نص التقييم</label>
+                <textarea value={reviewForm.text} onChange={e => setReviewForm(f => ({ ...f, text: e.target.value }))}
+                  placeholder="اكتب التقييم هنا..." rows={3}
+                  className={inputCls + ' resize-none'} />
+              </div>
+              <button
+                onClick={() => {
+                  if (!reviewForm.name.trim() || !reviewForm.text.trim()) return
+                  setReviews(prev => [...prev, { name: reviewForm.name.trim(), text: reviewForm.text.trim() }])
+                  setReviewForm({ name: '', text: '' })
+                }}
+                className="flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-xl transition-colors"
+                style={{ backgroundColor: '#D4A843', color: '#1a1a1a' }}>
+                + إضافة
+              </button>
+            </div>
+            <div className="flex justify-end pt-1">
+              <button onClick={saveReviews} disabled={savingReviews}
+                className="px-5 py-2 text-sm font-medium rounded-xl disabled:opacity-40 transition-colors"
+                style={{ backgroundColor: '#D4A843', color: '#1a1a1a' }}>
+                {savingReviews ? 'جارٍ الحفظ...' : 'حفظ'}
+              </button>
+            </div>
+          </div>
+        </Section>
+
+        <Section title="ما يميزنا">
+          <div className="space-y-3">
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">عنوان القسم</label>
+              <input value={featuresTitle} onChange={e => setFeaturesTitle(e.target.value)}
+                placeholder="ماذا يميزنا" className={inputCls} />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">وصف القسم</label>
+              <input value={featuresSubtitle} onChange={e => setFeaturesSubtitle(e.target.value)}
+                placeholder="نحن لسنا مجرد صالون..." className={inputCls} />
+            </div>
+            <p className="text-xs text-gray-500">أضف مميزات تظهر في صفحة الصالون</p>
+            {features.map((f, i) => (
+              <div key={i} className="rounded-xl border border-white/8 p-3 space-y-2" style={{ backgroundColor: '#0a0a0c' }}>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-gray-600">الميزة {i + 1}</p>
+                  <button onClick={() => setFeatures(prev => prev.filter((_, j) => j !== i))}
+                    className="p-1 text-gray-600 hover:text-red-400 rounded-lg hover:bg-red-900/20 transition-colors">
+                    <IconTrash />
+                  </button>
+                </div>
+                <input
+                  value={f.title}
+                  onChange={e => setFeatures(prev => prev.map((x, j) => j === i ? { ...x, title: e.target.value } : x))}
+                  placeholder="العنوان"
+                  className={inputCls}
+                />
+                <input
+                  value={f.description}
+                  onChange={e => setFeatures(prev => prev.map((x, j) => j === i ? { ...x, description: e.target.value } : x))}
+                  placeholder="الوصف"
+                  className={inputCls}
+                />
+              </div>
+            ))}
+            <button onClick={() => setFeatures(prev => [...prev, { title: '', description: '' }])}
+              className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm transition-colors border border-dashed border-white/10 text-gray-500 hover:border-white/20 hover:text-gray-300">
+              <span className="text-base leading-none">+</span>إضافة ميزة
+            </button>
+            <div className="flex justify-end pt-1">
+              <button onClick={saveFeatures} disabled={savingFeatures}
+                className="px-5 py-2 text-sm font-medium rounded-xl disabled:opacity-40 transition-colors"
+                style={{ backgroundColor: '#D4A843', color: '#1a1a1a' }}>
+                {savingFeatures ? 'جارٍ الحفظ...' : 'حفظ'}
+              </button>
+            </div>
+          </div>
+        </Section>
+
+        <Section title="قسم الحجز — الهيرو">
+          <div className="space-y-3">
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">العنوان الكبير</label>
+              <textarea value={bookingHeroTitle} onChange={e => setBookingHeroTitle(e.target.value)}
+                placeholder={"تفاصيل دقيقة\nأجواء راقية"} rows={3}
+                className={inputCls + ' resize-none'} />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">وصف الهيرو</label>
+              <textarea value={bookingHeroDescription} onChange={e => setBookingHeroDescription(e.target.value)}
+                placeholder="حلاقة رجالية فاخرة في قلب المدينة، بالحجز المسبق فقط." rows={3}
+                className={inputCls + ' resize-none'} />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">عنوان كارت الحجز</label>
+              <input value={bookingCardTitle} onChange={e => setBookingCardTitle(e.target.value)}
+                placeholder="حجز سريع" className={inputCls} />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">وصف الكارت</label>
+              <input value={bookingCardSubtitle} onChange={e => setBookingCardSubtitle(e.target.value)}
+                placeholder="اختر الحلاق والخدمة والوقت… والباقي علينا." className={inputCls} />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">الخطوة الأولى</label>
+              <input value={bookingStep1} onChange={e => setBookingStep1(e.target.value)}
+                placeholder="اختر الحلاق" className={inputCls} />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">الخطوة الثانية</label>
+              <input value={bookingStep2} onChange={e => setBookingStep2(e.target.value)}
+                placeholder="حدّد الخدمات" className={inputCls} />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">الخطوة الثالثة</label>
+              <input value={bookingStep3} onChange={e => setBookingStep3(e.target.value)}
+                placeholder="ثبّت موعدك" className={inputCls} />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">نص زر الحجز</label>
+              <input value={bookingButtonText} onChange={e => setBookingButtonText(e.target.value)}
+                placeholder="ابدأ الحجز" className={inputCls} />
+            </div>
+            <div className="flex justify-end pt-1">
+              <button onClick={saveBookingHero} disabled={savingBookingHero}
+                className="px-5 py-2 text-sm font-medium rounded-xl disabled:opacity-40 transition-colors"
+                style={{ backgroundColor: '#D4A843', color: '#1a1a1a' }}>
+                {savingBookingHero ? 'جارٍ الحفظ...' : 'حفظ'}
+              </button>
+            </div>
+          </div>
+        </Section>
+
+        <Section title="الشعار">
+          <div className="space-y-3">
+            {logoUrl && (
+              <div className="flex items-center gap-3">
+                <img src={logoUrl} alt="الشعار الحالي" className="h-16 w-auto rounded-xl object-contain border border-white/10" />
+                <button onClick={deleteLogo} disabled={deletingLogo}
+                  className="px-3 py-1.5 text-xs font-medium rounded-xl disabled:opacity-40 transition-colors border border-red-500/40 text-red-400 hover:bg-red-900/20">
+                  {deletingLogo ? 'جارٍ الحذف...' : 'حذف'}
+                </button>
+              </div>
+            )}
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">رفع الشعار</label>
+              <input type="file" accept="image/*" disabled={uploadingLogo}
+                onChange={e => { const f = e.target.files?.[0]; if (f) uploadLogo(f) }}
+                className={inputCls} />
+            </div>
+            {uploadingLogo && <p className="text-xs text-gray-500">جارٍ الرفع...</p>}
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-400">استخدام الشعار التلقائي</span>
+              <Toggle value={useAutoLogo} onChange={v => { setUseAutoLogo(v); saveAutoLogo(v, logoLetter) }} />
+            </div>
+            {useAutoLogo && (
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">الحرف</label>
+                <input value={logoLetter} maxLength={1}
+                  onChange={e => { setLogoLetter(e.target.value); saveAutoLogo(useAutoLogo, e.target.value) }}
+                  placeholder={salon?.name?.[0] ?? 'ف'} className={inputCls} />
+              </div>
+            )}
+            <div className="flex justify-end pt-1">
+              <button onClick={async () => {
+                const id = salonId ?? salon?.id ?? null
+                if (!id) return
+                setSavingAutoLogo(true)
+                const { data: current } = await supabase.from('salons').select('meta').eq('id', id).single()
+                const existingMeta = (current as any)?.meta ?? {}
+                const { error: e } = await supabase.from('salons').update({ meta: { ...existingMeta, logo_url: logoUrl, use_auto_logo: useAutoLogo, logo_letter: logoLetter.trim() } }).eq('id', id)
+                if (e) setError('تعذّر حفظ الشعار: ' + e.message)
+                setSavingAutoLogo(false)
+              }} disabled={savingAutoLogo}
+                className="px-5 py-2 text-sm font-medium rounded-xl disabled:opacity-40 transition-colors"
+                style={{ backgroundColor: '#D4A843', color: '#1a1a1a' }}>
+                {savingAutoLogo ? 'جارٍ الحفظ...' : 'حفظ'}
+              </button>
+            </div>
           </div>
         </Section>
 
         {salonSlug && (
           <a href={`/${salonSlug}`} target="_blank" rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl border border-white/10 text-sm font-medium text-white/70 hover:text-white hover:border-white/20 transition-colors"
-            style={{ backgroundColor: '#242424' }}>
+            className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl text-sm font-medium transition-colors"
+            style={{ backgroundColor: '#C9A84C', color: '#000' }}>
             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
             </svg>
