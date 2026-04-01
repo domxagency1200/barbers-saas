@@ -44,10 +44,15 @@ export default function NewDashboardPage() {
       fetch('/api/dashboard/auto-complete', { method: 'POST' }).catch(() => null)
 
       const now = new Date()
-      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0).toISOString()
-      const todayEnd   = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0).toISOString()
-      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
-      const monthEnd   = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString()
+      const riyParts = new Intl.DateTimeFormat('en', { timeZone: 'Asia/Riyadh', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(now)
+      const rp: Record<string, number> = {}
+      riyParts.forEach(({ type, value }) => { if (type !== 'literal') rp[type] = parseInt(value) })
+      const todayStart = new Date(`${rp.year}-${String(rp.month).padStart(2,'0')}-${String(rp.day).padStart(2,'0')}T00:00:00+03:00`).toISOString()
+      const todayEnd   = new Date(`${rp.year}-${String(rp.month).padStart(2,'0')}-${String(rp.day + 1).padStart(2,'0')}T00:00:00+03:00`).toISOString()
+      const monthStart = new Date(`${rp.year}-${String(rp.month).padStart(2,'0')}-01T00:00:00+03:00`).toISOString()
+      const monthEnd   = rp.month === 12
+        ? new Date(`${rp.year + 1}-01-01T00:00:00+03:00`).toISOString()
+        : new Date(`${rp.year}-${String(rp.month + 1).padStart(2,'0')}-01T00:00:00+03:00`).toISOString()
 
       const base = supabase.from('bookings').select(bookingSelect)
       const [{ data: todayRaw }, { data: monthRaw }] = await Promise.all([

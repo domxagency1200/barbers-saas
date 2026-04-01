@@ -44,18 +44,17 @@ const ARABIC_DAYS_SHORT = ['أح', 'إث', 'ث', 'أر', 'خ', 'ج', 'س']
 
 // ── Helpers ──────────────────────────────────────────────────
 
+const TZ = 'Asia/Riyadh'
+
 function formatTime(iso: string) {
-  const d = new Date(iso)
-  const h = d.getHours()
-  const m = d.getMinutes().toString().padStart(2, '0')
-  const period = h >= 12 ? 'م' : 'ص'
-  const hour = h % 12 || 12
-  return `${hour}:${m} ${period}`
+  return new Date(iso).toLocaleTimeString('ar-SA', { timeZone: TZ, hour: '2-digit', minute: '2-digit', hour12: true })
 }
 
 function isSameDay(iso: string, year: number, month: number, day: number) {
-  const d = new Date(iso)
-  return d.getFullYear() === year && d.getMonth() === month && d.getDate() === day
+  const parts = new Intl.DateTimeFormat('en', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date(iso))
+  const p: Record<string, number> = {}
+  parts.forEach(({ type, value }) => { if (type !== 'literal') p[type] = parseInt(value) })
+  return p.year === year && p.month - 1 === month && p.day === day
 }
 
 function groupByBarber(bookings: Booking[]): { id: string | null; name: string; bookings: Booking[] }[] {
