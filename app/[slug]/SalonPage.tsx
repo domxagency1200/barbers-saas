@@ -386,7 +386,7 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
   const tagline = salon.meta?.tagline || `مستوى جديد من العناية الرجالية في ${city} — تفاصيل دقيقة، أجواء راقية، بالحجز المسبق فقط.`
   const neighborhood = salon.meta?.neighborhood || city
   const heroImage = salon.meta?.hero_image || '/hero.jpg'
-  const mapUrl = salon.meta?.map_url || null
+  const mapUrl = salon.meta?.map_url || salon.meta?.map_embed_url || null
   const mapHref = (() => {
     if (!mapUrl) return 'https://maps.google.com'
     const placeId = mapUrl.match(/!1s([^!]+)(?=!5e)/)?.[1]
