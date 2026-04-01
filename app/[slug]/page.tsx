@@ -33,6 +33,7 @@ export default async function SlugPage({
       .from('barbers')
       .select('id, name')
       .eq('salon_id', salon.id)
+      .eq('is_deleted', false)
       .order('name'),
     supabase
       .from('services')
