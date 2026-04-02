@@ -368,11 +368,13 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
       const json = await res.json()
       if (!res.ok) { setFormMsg({ text: json.error ?? 'حدث خطأ أثناء الحجز، يرجى المحاولة مرة أخرى.', error: true }); return }
       setName(''); setPhone('05'); setBarber(''); setDate(''); setTime(''); setCheckedServices(new Set())
-      const waMsg = encodeURIComponent(
-        `تم الحجز بنجاح ✓\nالاسم: ${name}\nالخدمة: ${Array.from(checkedServices).join(' + ')}\nالحلاق: ${barber}\nالتاريخ: ${date}\nالوقت: ${time ? toArabicTimeLabel(...(time.split(':').map(Number) as [number, number])) : time}`
-      )
       if (salon.whatsapp_number) {
-        window.location.href = `https://wa.me/${salon.whatsapp_number}?text=${waMsg}`
+        const cleanPhone = salon.whatsapp_number.replace(/\D/g, '')
+        const [hh, mm] = time.split(':').map(Number)
+        const waMsg = encodeURIComponent(
+          `تم الحجز بنجاح ✓\nالاسم: ${name}\nالخدمة: ${Array.from(checkedServices).join(' + ')}\nالحلاق: ${barber}\nالتاريخ: ${date}\nالوقت: ${toArabicTimeLabel(hh, mm)}`
+        )
+        window.open(`https://wa.me/${cleanPhone}?text=${waMsg}`, '_blank', 'noopener,noreferrer')
       } else {
         setFormMsg({ text: 'تم الحجز بنجاح! سنتواصل معك قريباً.', error: false })
       }
