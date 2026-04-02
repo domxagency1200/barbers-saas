@@ -177,6 +177,7 @@ export default function NewDashboardClient({ todayBookings, monthBookings, salon
   const now = new Date()
   const [selectedDay, setSelectedDay] = useState(now.getDate())
   const [notifEnabled, setNotifEnabled] = useState(false)
+  const [testingPush, setTestingPush] = useState(false)
 
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return
@@ -186,6 +187,25 @@ export default function NewDashboardClient({ todayBookings, monthBookings, salon
       })
     ).catch(() => null)
   }, [])
+
+  async function testPush() {
+    if (!salonId) { alert('تعذّر تحديد الصالون'); return }
+    setTestingPush(true)
+    try {
+      const res = await fetch('/api/push/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ salon_id: salonId, title: 'اختبار تنبيه', body: 'إذا وصل هذا = الإشعارات تعمل ✓' }),
+      })
+      const json = await res.json()
+      if (res.ok) alert(`✓ تم الإرسال (${json.sent ?? 0} subscription)`)
+      else alert('✗ فشل: ' + JSON.stringify(json))
+    } catch (err) {
+      alert('✗ خطأ: ' + (err instanceof Error ? err.message : String(err)))
+    } finally {
+      setTestingPush(false)
+    }
+  }
 
   async function toggleNotifications() {
     if (notifEnabled) {
@@ -250,25 +270,41 @@ export default function NewDashboardClient({ todayBookings, monthBookings, salon
           <div style={{ borderRadius: 20, border: '1px solid rgba(255,255,255,0.07)', padding: '16px', backgroundColor: 'rgba(255,255,255,0.03)', position: 'relative', transition: 'all 0.25s ease' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
               <p style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.3)', fontWeight: 500 }}>حجوزات اليوم</p>
-              <span style={{ fontSize: '0.6rem', color: notifEnabled ? '#C9A55A' : 'rgba(255,255,255,0.2)', fontWeight: 600 }}>الإشعارات</span>
-              <button
-                onClick={toggleNotifications}
-                title={notifEnabled ? 'إيقاف الإشعارات' : 'تشغيل الإشعارات'}
-                style={{
-                  width: 36, height: 20, borderRadius: 10, border: 'none', cursor: 'pointer',
-                  backgroundColor: notifEnabled ? '#C9A55A' : 'rgba(255,255,255,0.1)',
-                  position: 'relative', transition: 'background 0.2s', flexShrink: 0,
-                }}
-              >
-                <span style={{
-                  position: 'absolute', top: 2,
-                  right: notifEnabled ? 2 : 18,
-                  width: 16, height: 16, borderRadius: '50%',
-                  backgroundColor: '#fff',
-                  transition: 'right 0.2s',
-                  display: 'block',
-                }} />
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontSize: '0.6rem', color: notifEnabled ? '#C9A55A' : 'rgba(255,255,255,0.2)', fontWeight: 600 }}>الإشعارات</span>
+                <button
+                  onClick={toggleNotifications}
+                  title={notifEnabled ? 'إيقاف الإشعارات' : 'تشغيل الإشعارات'}
+                  style={{
+                    width: 36, height: 20, borderRadius: 10, border: 'none', cursor: 'pointer',
+                    backgroundColor: notifEnabled ? '#C9A55A' : 'rgba(255,255,255,0.1)',
+                    position: 'relative', transition: 'background 0.2s', flexShrink: 0,
+                  }}
+                >
+                  <span style={{
+                    position: 'absolute', top: 2,
+                    right: notifEnabled ? 2 : 18,
+                    width: 16, height: 16, borderRadius: '50%',
+                    backgroundColor: '#fff',
+                    transition: 'right 0.2s',
+                    display: 'block',
+                  }} />
+                </button>
+                {notifEnabled && (
+                  <button
+                    onClick={testPush}
+                    disabled={testingPush}
+                    title="اختبار التنبيه"
+                    style={{
+                      fontSize: '0.6rem', padding: '2px 7px', borderRadius: 6, border: '1px solid rgba(201,165,90,0.3)',
+                      backgroundColor: 'rgba(201,165,90,0.08)', color: '#C9A55A', cursor: 'pointer', fontWeight: 600,
+                      opacity: testingPush ? 0.5 : 1,
+                    }}
+                  >
+                    {testingPush ? '...' : 'اختبار'}
+                  </button>
+                )}
+              </div>
             </div>
             <p style={{ fontSize: '2.2rem', fontWeight: 900, color: '#fff', lineHeight: 1, letterSpacing: '-0.03em' }}>{todayBookings.length}</p>
           </div>
