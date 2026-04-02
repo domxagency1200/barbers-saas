@@ -15,8 +15,9 @@ function BookingsPageInner() {
   const searchParams = useSearchParams()
   const supabase = createClient()
 
-  const now = new Date()
-  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  // Use Riyadh date (UTC+3) — avoids date flip around UTC midnight
+  const riyadhNow = new Date(Date.now() + 3 * 60 * 60 * 1000)
+  const todayStr = `${riyadhNow.getUTCFullYear()}-${String(riyadhNow.getUTCMonth() + 1).padStart(2, '0')}-${String(riyadhNow.getUTCDate()).padStart(2, '0')}`
   const dateStr = searchParams.get('date') ?? todayStr
 
   const [barbers, setBarbers] = useState<{ id: string; name: string }[]>([])
@@ -35,9 +36,8 @@ function BookingsPageInner() {
         if (salonId) setTabSalonId(salonId)
       }
 
-      const dateObj = new Date(dateStr)
-      const dayStart = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate(), 0, 0, 0).toISOString()
-      const dayEnd   = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate() + 1, 0, 0, 0).toISOString()
+      const dayStart = new Date(`${dateStr}T00:00:00+03:00`).toISOString()
+      const dayEnd   = new Date(`${dateStr}T23:59:59+03:00`).toISOString()
 
       const [{ data: barbersRaw }, { data: bookingsRaw }] = await Promise.all([
         salonId

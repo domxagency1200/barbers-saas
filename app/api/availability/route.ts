@@ -60,8 +60,8 @@ export async function GET(req: NextRequest) {
     closeAt = schedule.close_at.slice(0, 5)
   }
 
-  const dayStart = `${date}T00:00:00+00:00`
-  const dayEnd = `${date}T23:59:59+00:00`
+  const dayStart = new Date(`${date}T00:00:00+03:00`).toISOString()
+  const dayEnd   = new Date(`${date}T23:59:59+03:00`).toISOString()
 
   const { data: bookings, error: bookingsError } = await supabase
     .from('bookings')

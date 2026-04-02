@@ -7,8 +7,8 @@ import RefundBookingButton from '@/components/dashboard/RefundBookingButton'
 
 function formatTime(iso: string) {
   const d = new Date(iso)
-  const h = d.getHours()
-  const m = d.getMinutes().toString().padStart(2, '0')
+  const h = (d.getUTCHours() + 3) % 24  // UTC → Riyadh (UTC+3)
+  const m = d.getUTCMinutes().toString().padStart(2, '0')
   const period = h >= 12 ? 'م' : 'ص'
   const hour = h % 12 || 12
   return `${hour}:${m} ${period}`
@@ -28,13 +28,14 @@ export default async function BarberBookingsPage({
   const { barberId } = await params
   const { date } = await searchParams
 
-  const now = new Date()
-  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  // Compute today's date in Riyadh time (UTC+3) — server runs UTC on Vercel
+  const riyadhNow = new Date(Date.now() + 3 * 60 * 60 * 1000)
+  const todayStr = `${riyadhNow.getUTCFullYear()}-${String(riyadhNow.getUTCMonth() + 1).padStart(2, '0')}-${String(riyadhNow.getUTCDate()).padStart(2, '0')}`
   const dateStr = date ?? todayStr
-  const dateObj = new Date(dateStr)
 
-  const dayStart = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate(), 0, 0, 0).toISOString()
-  const dayEnd   = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate() + 1, 0, 0, 0).toISOString()
+  // Explicit +03:00 so the range always matches Riyadh midnight-to-midnight
+  const dayStart = new Date(`${dateStr}T00:00:00+03:00`).toISOString()
+  const dayEnd   = new Date(`${dateStr}T23:59:59+03:00`).toISOString()
 
   const { data: barber } = await supabase
     .from('barbers')
