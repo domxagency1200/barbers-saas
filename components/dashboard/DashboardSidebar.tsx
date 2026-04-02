@@ -105,34 +105,21 @@ export default function DashboardSidebar() {
   const [meta, setMeta] = useState<{ logo_url?: string; use_auto_logo?: boolean; logo_letter?: string; card_theme?: string; custom_color?: string } | null>(null)
   const [unread, setUnread] = useState(0)
 
-  // Load from localStorage after mount to avoid hydration mismatch
+  // Fetch unseen count from DB on mount
   useEffect(() => {
-    setUnread(parseInt(localStorage.getItem('unread_bookings') ?? '0', 10))
+    fetch('/api/dashboard/unseen')
+      .then(r => r.json())
+      .then(j => setUnread(j.count ?? 0))
+      .catch(() => null)
   }, [])
 
-  // Reset badge when visiting bookings
+  // Mark as seen + reset badge when visiting bookings
   useEffect(() => {
     if (pathname.startsWith('/dashboard/bookings')) {
       setUnread(0)
-      localStorage.setItem('unread_bookings', '0')
+      fetch('/api/dashboard/unseen', { method: 'POST' }).catch(() => null)
     }
   }, [pathname])
-
-  // Listen for new booking messages from SW
-  useEffect(() => {
-    if (!('serviceWorker' in navigator)) return
-    const handler = (e: MessageEvent) => {
-      if (e.data?.type === 'NEW_BOOKING') {
-        setUnread(prev => {
-          const next = prev + 1
-          localStorage.setItem('unread_bookings', String(next))
-          return next
-        })
-      }
-    }
-    navigator.serviceWorker.addEventListener('message', handler)
-    return () => navigator.serviceWorker.removeEventListener('message', handler)
-  }, [])
 
   useEffect(() => {
     const supabase = createClient()
