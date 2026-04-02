@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { sendPushToSalon } from '@/lib/sendPush'
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
@@ -41,20 +42,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  // Call /api/push/send directly — same endpoint used by manual test (confirmed working).
-  // Fire-and-forget: booking success must not depend on push success.
   const timeLabel = new Date(starts_at).toLocaleTimeString('ar-SA', {
     timeZone: 'Asia/Riyadh', hour: '2-digit', minute: '2-digit',
   })
-  fetch(`${req.nextUrl.origin}/api/push/send`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      salon_id,
-      title: 'حجز جديد 🎉',
-      body: `${customer_name} — ${timeLabel}`,
-    }),
-  }).catch(err => console.error('[push]', err))
+
+  // await so Vercel doesn't kill the function before push completes
+  await sendPushToSalon(salon_id, 'حجز جديد 🎉', `${customer_name} — ${timeLabel}`).catch(() => null)
 
   return NextResponse.json(data, { status: 201 })
 }
