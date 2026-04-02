@@ -28,9 +28,17 @@ export async function POST(req: NextRequest) {
       : `mailto:${vapidEmail}`
 
     // Normalize to URL-safe base64 (no padding, - instead of +, _ instead of /)
-    const normalizeKey = (k: string) => k.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '')
+    const normalizeKey = (k: string) => k.replace(/\s/g, '').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '')
 
-    webpush.setVapidDetails(subject, normalizeKey(vapidPublic), normalizeKey(vapidPrivate))
+    const cleanPublic  = normalizeKey(vapidPublic)
+    const cleanPrivate = normalizeKey(vapidPrivate)
+
+    // Debug: return key preview so we can verify format
+    if (req.nextUrl.searchParams.get('debug') === '1') {
+      return NextResponse.json({ cleanPublic: cleanPublic.slice(0, 20) + '...', len: cleanPublic.length })
+    }
+
+    webpush.setVapidDetails(subject, cleanPublic, cleanPrivate)
 
     const { salon_id, title, body } = await req.json()
     if (!salon_id) return NextResponse.json({ error: 'missing salon_id' }, { status: 400 })
