@@ -375,7 +375,7 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
         const waMsg = encodeURIComponent(
           `تم الحجز بنجاح ✓\nالاسم: ${name}\nالخدمة: ${Array.from(checkedServices).join(' + ')}\nالحلاق: ${barber}\nالتاريخ: ${date}\nالوقت: ${toArabicTimeLabel(hh, mm)}`
         )
-        window.open(`https://wa.me/${cleanPhone}?text=${waMsg}`, '_blank', 'noopener,noreferrer')
+        window.location.href = `https://wa.me/${cleanPhone}?text=${waMsg}`
       } else {
         setFormMsg({ text: 'تم الحجز بنجاح! سنتواصل معك قريباً.', error: false })
       }
