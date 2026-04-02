@@ -42,8 +42,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  // Send push notification to salon owner
-  sendPushToSalon(
+  // Send push notification — must await before returning, otherwise Vercel
+  // kills the serverless function before the push completes
+  await sendPushToSalon(
     salon_id,
     'حجز جديد 🎉',
     `${customer_name} — ${new Date(starts_at).toLocaleTimeString('ar-SA', { timeZone: 'Asia/Riyadh', hour: '2-digit', minute: '2-digit' })}`
