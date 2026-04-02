@@ -369,7 +369,8 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
       if (!res.ok) { setFormMsg({ text: json.error ?? 'حدث خطأ أثناء الحجز، يرجى المحاولة مرة أخرى.', error: true }); return }
       setName(''); setPhone('05'); setBarber(''); setDate(''); setTime(''); setCheckedServices(new Set())
       if (salon.whatsapp_number) {
-        const cleanPhone = salon.whatsapp_number.replace(/\D/g, '')
+        const digits = salon.whatsapp_number.replace(/\D/g, '')
+        const cleanPhone = digits.startsWith('0') ? '966' + digits.slice(1) : digits
         const [hh, mm] = time.split(':').map(Number)
         const waMsg = encodeURIComponent(
           `تم الحجز بنجاح ✓\nالاسم: ${name}\nالخدمة: ${Array.from(checkedServices).join(' + ')}\nالحلاق: ${barber}\nالتاريخ: ${date}\nالوقت: ${toArabicTimeLabel(hh, mm)}`
