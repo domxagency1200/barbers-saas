@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import webpush from 'web-push'
 
-
 function adminClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -12,31 +11,52 @@ function adminClient() {
 }
 
 export async function POST(req: NextRequest) {
-  const subject = process.env.VAPID_EMAIL!
-  webpush.setVapidDetails(
-    subject.startsWith('mailto:') || subject.startsWith('https://') ? subject : `mailto:${subject}`,
-    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-    process.env.VAPID_PRIVATE_KEY!,
-  )
-  const { salon_id, title, body } = await req.json()
-  if (!salon_id) return NextResponse.json({ error: 'missing salon_id' }, { status: 400 })
+  try {
+    const vapidEmail   = process.env.VAPID_EMAIL
+    const vapidPublic  = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+    const vapidPrivate = process.env.VAPID_PRIVATE_KEY
 
-  const supabase = adminClient()
-  const { data: subs } = await supabase
-    .from('push_subscriptions')
-    .select('endpoint, p256dh, auth')
-    .eq('salon_id', salon_id)
+    if (!vapidEmail || !vapidPublic || !vapidPrivate) {
+      return NextResponse.json({
+        error: 'missing env vars',
+        has: { vapidEmail: !!vapidEmail, vapidPublic: !!vapidPublic, vapidPrivate: !!vapidPrivate },
+      }, { status: 500 })
+    }
 
-  if (!subs?.length) return NextResponse.json({ ok: true, sent: 0 })
+    const subject = vapidEmail.startsWith('mailto:') || vapidEmail.startsWith('https://')
+      ? vapidEmail
+      : `mailto:${vapidEmail}`
 
-  const payload = JSON.stringify({ title, body, url: '/dashboard/bookings' })
+    webpush.setVapidDetails(subject, vapidPublic, vapidPrivate)
 
-  await Promise.allSettled(subs.map(s =>
-    webpush.sendNotification(
-      { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
-      payload
-    )
-  ))
+    const { salon_id, title, body } = await req.json()
+    if (!salon_id) return NextResponse.json({ error: 'missing salon_id' }, { status: 400 })
 
-  return NextResponse.json({ ok: true, sent: subs.length })
+    const supabase = adminClient()
+    const { data: subs, error: dbErr } = await supabase
+      .from('push_subscriptions')
+      .select('endpoint, p256dh, auth')
+      .eq('salon_id', salon_id)
+
+    if (dbErr) return NextResponse.json({ error: 'db: ' + dbErr.message }, { status: 500 })
+    if (!subs?.length) return NextResponse.json({ ok: true, sent: 0, note: 'no subscriptions found for this salon_id' })
+
+    const payload = JSON.stringify({ title, body, url: '/dashboard/bookings' })
+
+    const results = await Promise.allSettled(subs.map(s =>
+      webpush.sendNotification(
+        { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
+        payload
+      )
+    ))
+
+    const failed = results
+      .filter(r => r.status === 'rejected')
+      .map(r => (r as PromiseRejectedResult).reason?.message ?? String((r as PromiseRejectedResult).reason))
+
+    return NextResponse.json({ ok: true, sent: subs.length, failed })
+
+  } catch (err) {
+    return NextResponse.json({ error: (err as Error).message ?? String(err) }, { status: 500 })
+  }
 }
