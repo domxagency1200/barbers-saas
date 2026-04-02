@@ -225,7 +225,7 @@ export default function NewDashboardClient({ todayBookings, monthBookings, salon
       const reg = await navigator.serviceWorker.register('/sw.js')
       await navigator.serviceWorker.ready
       const existing = await reg.pushManager.getSubscription()
-      const rawKey = 'BNEgTj_n0t5fSrQGKtaQhHUi5lAhpiuoInXwWRsy8LWXOKcyh9kUxFKH23FbRtRi7ZCFYaCskHUtnePDnn1k0R4'
+      const rawKey = 'BJCk2I6oGOOBP_ETD3wokO3dE0XzjUe8Ma65dxtks4NTBm3nipEgbWkRUztJB5WTitJSmkqtHjYx0GDmODjnlJk'
       const base64 = rawKey.replace(/-/g, '+').replace(/_/g, '/')
       const binary = atob(base64)
       const vapidKey = new Uint8Array(binary.length)
