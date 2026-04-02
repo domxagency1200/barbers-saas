@@ -27,7 +27,10 @@ export async function POST(req: NextRequest) {
       ? vapidEmail
       : `mailto:${vapidEmail}`
 
-    webpush.setVapidDetails(subject, vapidPublic, vapidPrivate)
+    // Normalize to URL-safe base64 (no padding, - instead of +, _ instead of /)
+    const normalizeKey = (k: string) => k.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '')
+
+    webpush.setVapidDetails(subject, normalizeKey(vapidPublic), normalizeKey(vapidPrivate))
 
     const { salon_id, title, body } = await req.json()
     if (!salon_id) return NextResponse.json({ error: 'missing salon_id' }, { status: 400 })
