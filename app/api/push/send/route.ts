@@ -12,8 +12,9 @@ function adminClient() {
 }
 
 export async function POST(req: NextRequest) {
+  const subject = process.env.VAPID_EMAIL!
   webpush.setVapidDetails(
-    process.env.VAPID_EMAIL!,
+    subject.startsWith('mailto:') || subject.startsWith('https://') ? subject : `mailto:${subject}`,
     process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
     process.env.VAPID_PRIVATE_KEY!,
   )

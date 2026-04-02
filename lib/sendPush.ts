@@ -2,8 +2,9 @@ import webpush from 'web-push'
 import { createClient } from '@supabase/supabase-js'
 
 export async function sendPushToSalon(salon_id: string, title: string, body: string) {
+  const subject = process.env.VAPID_EMAIL!
   webpush.setVapidDetails(
-    process.env.VAPID_EMAIL!,
+    subject.startsWith('mailto:') || subject.startsWith('https://') ? subject : `mailto:${subject}`,
     process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? 'BNEgTj_n0t5fSrQGKtaQhHUi5lAhpiuoInXwWRsy8LWXOKcyh9kUxFKH23FbRtRi7ZCFYaCskHUtnePDnn1k0R4',
     process.env.VAPID_PRIVATE_KEY!,
   )
