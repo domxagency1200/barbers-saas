@@ -1177,12 +1177,14 @@ export default function SalonPage({ salon, barbers, services, slug }: Props) {
                 إجمالي الطلب: {(() => { const so = selectedOfferId ? (salon.meta?.offers ?? []).find((o: any) => o.id === selectedOfferId) : null; return so?.price_current ? Number(so.price_current) : services.filter(s => checkedServices.has(s.name_ar)).reduce((sum, s) => sum + s.price, 0) })()} ر.س
               </div>
 
-              <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <button type="submit" disabled={submitting} className="btn-gold w-full rounded-xl px-6 py-3 text-sm font-extrabold focus:outline-none sm:w-auto disabled:opacity-60">
-                  {submitting ? '...' : 'تأكيد الحجز'}
+              <div className="mt-4 flex flex-col gap-2">
+                <button type="submit" disabled={submitting} className="btn-gold w-full rounded-xl px-6 py-3.5 text-sm font-extrabold focus:outline-none disabled:opacity-60" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                  {submitting ? '...' : (<>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.124.558 4.118 1.532 5.845L.054 23.448a.75.75 0 0 0 .906.953l5.808-1.519A11.95 11.95 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.885 0-3.651-.524-5.157-1.432l-.36-.215-3.742.979.999-3.648-.235-.374A9.96 9.96 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+                    تأكيد الحجز وإشعار الحلاق
+                  </>)}
                 </button>
-                <button type="button" onClick={handleWhatsApp} className="w-full rounded-xl border border-gold/30 px-6 py-3 text-sm font-extrabold t-primary transition-all duration-200 hover:border-gold/55 hover:text-white sm:w-auto" style={{ background: 'rgba(0,0,0,.35)' }}>واتساب</button>
-                <button type="button" onClick={() => setBookingOpen(false)} className="w-full rounded-xl border border-default px-6 py-3 text-sm font-bold t-muted transition-all duration-200 hover:border-white/20 hover:text-white/85 sm:w-auto" style={{ background: 'var(--card-bg)' }}>إلغاء</button>
+                <button type="button" onClick={() => setBookingOpen(false)} className="w-full rounded-xl px-6 py-2.5 text-sm font-medium t-muted transition-all duration-200 hover:text-white/85" style={{ background: 'transparent' }}>إلغاء</button>
               </div>
             </form>
           </div>
