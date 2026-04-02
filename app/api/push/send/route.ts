@@ -10,6 +10,22 @@ function adminClient() {
   )
 }
 
+export async function GET() {
+  const vapidPublic  = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? ''
+  const vapidPrivate = process.env.VAPID_PRIVATE_KEY ?? ''
+  const vapidEmail   = process.env.VAPID_EMAIL ?? ''
+  const normalizeKey = (k: string) => k.replace(/\s/g, '').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '')
+  const cleanPublic  = normalizeKey(vapidPublic)
+  const cleanPrivate = normalizeKey(vapidPrivate)
+  return NextResponse.json({
+    email: vapidEmail ? vapidEmail.slice(0, 20) + '...' : 'NOT SET',
+    publicKey:  cleanPublic  ? cleanPublic.slice(0, 20)  + `... (len:${cleanPublic.length})`  : 'NOT SET',
+    privateKey: cleanPrivate ? cleanPrivate.slice(0, 10) + `... (len:${cleanPrivate.length})` : 'NOT SET',
+    publicKeyValid:  /^[A-Za-z0-9\-_]+$/.test(cleanPublic),
+    privateKeyValid: /^[A-Za-z0-9\-_]+$/.test(cleanPrivate),
+  })
+}
+
 export async function POST(req: NextRequest) {
   try {
     const vapidEmail   = process.env.VAPID_EMAIL
